@@ -1,0 +1,920 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Relações com a Imprensa — Betano × Grupo In Press</title>
+<meta name="description" content="Painel de acompanhamento de ações de relacionamento com a imprensa — Betano × Grupo In Press">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --ink:        #0E1A2B;
+  --ink-2:      #16283F;
+  --ink-3:      #1D3350;
+  --rule:       #2C4162;
+  --paper:      #F6F1E3;
+  --paper-2:    #EEE6D1;
+  --paper-3:    #E4D9BC;
+  --rule-paper: #C9BC98;
+  --ink-text:   #211A0F;
+  --ink-text-soft: #5B5342;
+  --gold:       #C79A2B;
+  --gold-soft:  #E4C978;
+  --teal:       #146B57;
+  --teal-soft:  #DCEDE7;
+  --amber:      #B9791A;
+  --amber-soft: #F4E4C6;
+  --red:        #A23A26;
+  --red-soft:   #F3DCD3;
+  --blue:       #2C5A8C;
+  --blue-soft:  #DCE7F2;
+  --slate:      #64707F;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+}
+
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink-text);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{ font-family:var(--font-display); margin:0; }
+a{ color:inherit; }
+button{ font-family:var(--font-body); cursor:pointer; }
+::selection{ background:var(--gold-soft); }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+}
+
+.visually-hidden{ position:absolute; width:1px;height:1px; overflow:hidden; clip:rect(0,0,0,0); }
+
+/* ============================================================
+   MASTHEAD
+   ============================================================ */
+.masthead{
+  background:
+    radial-gradient(ellipse at 15% -10%, rgba(199,154,43,0.14), transparent 55%),
+    linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+  color:var(--paper);
+  padding:28px 32px 0;
+  position:relative;
+}
+.masthead-top{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  max-width:1320px; margin:0 auto;
+  border-bottom:1px solid var(--rule);
+  padding-bottom:18px;
+  gap:20px; flex-wrap:wrap;
+}
+.masthead-kicker{
+  font-family:var(--font-mono);
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold-soft); margin:0 0 10px;
+  display:flex; gap:10px; align-items:center;
+}
+.masthead-kicker .dot{ width:5px;height:5px;border-radius:50%; background:var(--gold-soft); display:inline-block; }
+.masthead h1{
+  font-size:clamp(32px, 4.4vw, 54px);
+  font-weight:600;
+  line-height:1.02;
+  letter-spacing:-0.01em;
+}
+.masthead .subtitle{
+  font-family:var(--font-display); font-style:italic; font-weight:500;
+  font-size:clamp(15px,1.6vw,19px);
+  color:#C9D3E0; margin-top:8px;
+}
+.masthead-meta{
+  font-family:var(--font-mono); font-size:12px; color:#AEBBCC;
+  display:flex; flex-direction:column; gap:7px; align-items:flex-end;
+  text-align:right; min-width:220px; padding-top:6px;
+}
+.masthead-meta .status{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+  padding:4px 10px; border-radius:20px; border:1px solid var(--rule);
+}
+.status-dot{ width:7px;height:7px;border-radius:50%; background:var(--slate); }
+.status.live .status-dot{ background:#4CAF87; box-shadow:0 0 0 3px rgba(76,175,135,0.25); }
+.status.offline .status-dot{ background:var(--amber); box-shadow:0 0 0 3px rgba(185,121,26,0.25); }
+.masthead-meta button{
+  background:transparent; border:1px solid var(--rule); color:#D8E0EA;
+  font-family:var(--font-mono); font-size:11px; padding:6px 12px; border-radius:20px;
+  letter-spacing:.04em; transition:.15s;
+}
+.masthead-meta button:hover{ border-color:var(--gold-soft); color:var(--gold-soft); }
+
+.masthead-strip{
+  max-width:1320px; margin:0 auto;
+  display:flex; gap:28px; flex-wrap:wrap;
+  padding:14px 0 20px; font-family:var(--font-mono); font-size:12px; color:#9FADBF;
+}
+.masthead-strip b{ color:var(--gold-soft); font-weight:600; }
+
+/* torn paper divider */
+.torn{
+  height:22px; width:100%; display:block;
+  background:var(--ink-2);
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'><path d='M0 6 L5 10 L10 4 L15 12 L20 5 L25 11 L30 3 L35 9 L40 6 L40 22 L0 22 Z' fill='black'/></svg>");
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'><path d='M0 6 L5 10 L10 4 L15 12 L20 5 L25 11 L30 3 L35 9 L40 6 L40 22 L0 22 Z' fill='black'/></svg>");
+  -webkit-mask-repeat:repeat-x; mask-repeat:repeat-x;
+  -webkit-mask-size: 40px 22px; mask-size:40px 22px;
+}
+
+/* ticker */
+.ticker-wrap{
+  background:var(--ink-3); border-top:1px solid var(--rule); border-bottom:1px solid var(--rule);
+  overflow:hidden; white-space:nowrap;
+}
+.ticker{
+  display:inline-block; padding:9px 0;
+  font-family:var(--font-mono); font-size:12px; color:#C9D3E0;
+  animation:ticker 60s linear infinite;
+}
+.ticker span{ padding:0 26px; border-right:1px solid var(--rule); }
+.ticker span b{ color:var(--gold-soft); }
+@keyframes ticker{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+
+/* ============================================================
+   KPI STRIP
+   ============================================================ */
+.kpi-section{ background:var(--paper); padding:26px 32px 6px; }
+.kpi-grid{
+  max-width:1320px; margin:0 auto;
+  display:grid; grid-template-columns:repeat(6,1fr); gap:1px;
+  background:var(--rule-paper); border:1px solid var(--rule-paper);
+}
+.kpi{
+  background:var(--paper); padding:18px 16px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.kpi .num{ font-family:var(--font-display); font-size:clamp(24px,2.6vw,34px); font-weight:600; line-height:1; }
+.kpi .label{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-text-soft); font-weight:600;}
+.kpi .sub{ font-family:var(--font-mono); font-size:11px; color:var(--ink-text-soft); }
+.kpi.accent-teal .num{ color:var(--teal); }
+.kpi.accent-amber .num{ color:var(--amber); }
+.kpi.accent-red .num{ color:var(--red); }
+.kpi.accent-gold .num{ color:#96731E; }
+
+@media (max-width:980px){ .kpi-grid{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width:600px){ .kpi-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+.filters-wrap{ position:sticky; top:0; z-index:40; background:var(--paper); border-bottom:1px solid var(--rule-paper); }
+.filters{
+  max-width:1320px; margin:0 auto; padding:14px 32px;
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+}
+.filters .field{ display:flex; flex-direction:column; gap:4px; }
+.filters label{ font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-text-soft); font-weight:600; }
+.filters select, .filters input[type=text], .filters input[type=date]{
+  font-family:var(--font-body); font-size:13px; padding:7px 10px;
+  border:1px solid var(--rule-paper); border-radius:6px; background:#fff; color:var(--ink-text);
+  min-width:140px;
+}
+.filters input[type=text]{ min-width:200px; }
+.filters .search-field{ flex:1; min-width:220px; }
+.filters .search-field input{ width:100%; }
+.filters button.reset{
+  background:transparent; border:1px solid var(--rule-paper); border-radius:20px;
+  padding:8px 14px; font-size:12px; color:var(--ink-text-soft); align-self:flex-end;
+}
+.filters button.reset:hover{ border-color:var(--red); color:var(--red); }
+.result-count{ font-family:var(--font-mono); font-size:12px; color:var(--ink-text-soft); align-self:flex-end; margin-left:auto; padding-bottom:8px; }
+
+/* ============================================================
+   SECTIONS / CHARTS
+   ============================================================ */
+.section{ max-width:1320px; margin:0 auto; padding:34px 32px; }
+.section-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+.section-head h2{ font-size:22px; font-weight:600; }
+.section-head .eyebrow{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate);
+}
+.charts-grid{ display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:16px; }
+.charts-grid .wide{ grid-column:1/-1; }
+.chart-card{
+  background:#fff; border:1px solid var(--rule-paper); border-radius:10px; padding:18px;
+}
+.chart-card h3{ font-size:14px; font-weight:700; font-family:var(--font-body); margin-bottom:4px; }
+.chart-card .cap{ font-size:11px; color:var(--ink-text-soft); margin-bottom:12px; font-family:var(--font-mono); }
+.chart-card canvas{ max-height:260px; }
+.chart-card.tall canvas{ max-height:320px; }
+@media (max-width:980px){ .charts-grid{ grid-template-columns:1fr; } }
+
+/* ============================================================
+   FEED / CLIPPINGS
+   ============================================================ */
+.feed-controls{ display:flex; gap:8px; align-items:center; }
+.view-toggle{ display:flex; border:1px solid var(--rule-paper); border-radius:20px; overflow:hidden; }
+.view-toggle button{
+  background:#fff; border:none; padding:7px 16px; font-size:12px; color:var(--ink-text-soft); font-weight:600;
+}
+.view-toggle button.active{ background:var(--ink); color:var(--paper); }
+.export-btn{
+  background:var(--paper); border:1px solid var(--rule-paper); border-radius:20px; padding:7px 16px; font-size:12px; font-weight:600; color:var(--ink-text);
+}
+.export-btn:hover{ border-color:var(--gold); color:#8B6A1E; }
+
+.cards-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:18px; margin-top:18px; }
+
+.clip{
+  background:#fff;
+  border:1px solid var(--rule-paper);
+  border-top:none;
+  padding:18px 18px 16px;
+  position:relative;
+  box-shadow:0 1px 0 rgba(0,0,0,0.02);
+}
+.clip::before{
+  content:"";
+  position:absolute; top:-1px; left:0; right:0; height:9px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='9' viewBox='0 0 24 9'><path d='M0 9 L3 1 L6 8 L9 2 L12 9 L15 1 L18 8 L21 2 L24 9 Z' fill='white' stroke='%23C9BC98' stroke-width='1'/></svg>");
+  background-repeat:repeat-x; background-size:24px 9px;
+}
+.clip-top{ display:flex; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.clip-date{ font-family:var(--font-mono); font-size:11px; color:var(--slate); }
+.clip-veiculo{ font-family:var(--font-display); font-weight:600; font-size:15px; }
+.clip-jornalista{ font-size:12px; color:var(--ink-text-soft); margin-top:1px; }
+.clip-materia{ font-size:12px; margin:8px 0 10px; color:var(--blue); text-decoration:none; display:inline-block; }
+.clip-materia.notlink{ color:var(--ink-text-soft); font-style:italic; }
+.clip-analise{ font-size:12.5px; line-height:1.5; color:var(--ink-text); margin-bottom:10px; }
+.clip-badges{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.stamp{
+  display:inline-block; font-family:var(--font-mono); font-size:10px; font-weight:600;
+  letter-spacing:.05em; text-transform:uppercase; padding:4px 9px; border-radius:3px;
+  border:1.5px solid currentColor; transform:rotate(-2deg);
+}
+.stamp.teal{ color:var(--teal); background:var(--teal-soft); }
+.stamp.amber{ color:var(--amber); background:var(--amber-soft); }
+.stamp.red{ color:var(--red); background:var(--red-soft); }
+.stamp.blue{ color:var(--blue); background:var(--blue-soft); }
+.stamp.gold{ color:#8B6A1E; background:#F3E7C8; }
+.stamp.grey{ color:var(--slate); background:#EEF0F2; }
+.clip-detail{ font-size:12px; color:var(--ink-text-soft); border-top:1px dashed var(--rule-paper); padding-top:8px; margin-top:6px; }
+.clip-detail div{ margin-bottom:3px; }
+.clip-detail b{ color:var(--ink-text); }
+
+/* table view */
+.table-wrap{ margin-top:18px; overflow-x:auto; border:1px solid var(--rule-paper); border-radius:10px; background:#fff; }
+table.data-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+table.data-table th{
+  text-align:left; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+  color:var(--slate); background:var(--paper-2); padding:10px 12px; border-bottom:1px solid var(--rule-paper); white-space:nowrap;
+  position:sticky; top:0;
+}
+table.data-table td{ padding:10px 12px; border-bottom:1px solid #EFEAE0; vertical-align:top; }
+table.data-table tr:hover td{ background:#FBF8F0; }
+.td-materia{ max-width:260px; }
+.td-analise{ max-width:320px; color:var(--ink-text-soft); }
+.hidden{ display:none !important; }
+
+.empty-state{ padding:50px 20px; text-align:center; color:var(--ink-text-soft); }
+.empty-state h3{ font-family:var(--font-display); font-size:20px; margin-bottom:6px; color:var(--ink-text); }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer{
+  background:var(--ink); color:#9FADBF; padding:26px 32px; margin-top:20px;
+  font-family:var(--font-mono); font-size:11px;
+}
+footer .foot-inner{ max-width:1320px; margin:0 auto; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+footer a{ color:var(--gold-soft); text-decoration:none; }
+
+/* offline banner */
+.banner{
+  max-width:1320px; margin:14px auto 0; padding:10px 16px; border-radius:8px;
+  font-size:12.5px; display:flex; align-items:center; gap:10px; justify-content:space-between;
+}
+.banner.offline{ background:var(--amber-soft); color:#6E4A0E; border:1px solid #E0C179; }
+.banner button{ background:transparent; border:1px solid currentColor; border-radius:16px; padding:4px 10px; font-size:11px; color:inherit; }
+</style>
+</head>
+<body>
+
+<!-- ================= MASTHEAD ================= -->
+<header class="masthead">
+  <div class="masthead-top">
+    <div>
+      <p class="masthead-kicker"><span class="dot"></span> ASSESSORIA DE IMPRENSA &nbsp;·&nbsp; EDIÇÃO CONTÍNUA</p>
+      <h1>Relações com a Imprensa</h1>
+      <p class="subtitle">Betano &amp; Grupo In Press — mapa vivo de contatos, pautas e retornos com jornalistas</p>
+    </div>
+    <div class="masthead-meta">
+      <span class="status offline" id="dataStatus"><span class="status-dot"></span><span id="dataStatusText">carregando…</span></span>
+      <span id="lastUpdated">—</span>
+      <button id="refreshBtn" type="button">↻ Atualizar dados</button>
+    </div>
+  </div>
+  <div class="masthead-strip">
+    <span><b>Cliente</b> Betano</span>
+    <span><b>Agência</b> Grupo In Press</span>
+    <span><b>Cobertura</b> Regulação de bets no Brasil</span>
+    <span><b>Fonte</b> Planilha de acompanhamento do time</span>
+  </div>
+  <span class="torn"></span>
+</header>
+
+<div class="ticker-wrap">
+  <div class="ticker" id="ticker">Carregando ações recentes…</div>
+</div>
+
+<div id="offlineBanner"></div>
+
+<!-- ================= KPIs ================= -->
+<section class="kpi-section">
+  <div class="kpi-grid" id="kpiGrid"></div>
+</section>
+
+<!-- ================= FILTERS ================= -->
+<div class="filters-wrap">
+  <div class="filters">
+    <div class="field search-field">
+      <label for="fSearch">Buscar</label>
+      <input type="text" id="fSearch" placeholder="Jornalista, veículo, pauta, análise…">
+    </div>
+    <div class="field">
+      <label for="fVeiculo">Veículo</label>
+      <select id="fVeiculo"><option value="">Todos</option></select>
+    </div>
+    <div class="field">
+      <label for="fAcao">Ação</label>
+      <select id="fAcao"><option value="">Todas</option></select>
+    </div>
+    <div class="field">
+      <label for="fRetorno">Retorno</label>
+      <select id="fRetorno"><option value="">Todos</option></select>
+    </div>
+    <div class="field">
+      <label for="fDe">De</label>
+      <input type="date" id="fDe">
+    </div>
+    <div class="field">
+      <label for="fAte">Até</label>
+      <input type="date" id="fAte">
+    </div>
+    <button class="reset" id="resetBtn" type="button">Limpar filtros</button>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+</div>
+
+<!-- ================= CHARTS ================= -->
+<section class="section">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Panorama</p>
+      <h2>Como está a operação de relacionamento</h2>
+    </div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-card wide">
+      <h3>Funil: ação do time → retorno do jornalista</h3>
+      <p class="cap">Cada barra é uma etapa da jornada de relacionamento, da decisão de contato ao retorno recebido</p>
+      <canvas id="chartFunil"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Distribuição por ação</h3>
+      <p class="cap">O que o time decidiu fazer em cada pauta</p>
+      <canvas id="chartAcao"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Distribuição por retorno</h3>
+      <p class="cap">O que voltou do jornalista</p>
+      <canvas id="chartRetorno"></canvas>
+    </div>
+    <div class="chart-card">
+      <h3>Linha do tempo</h3>
+      <p class="cap">Ações registradas por mês</p>
+      <canvas id="chartTempo"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>Veículos mais acionados</h3>
+      <p class="cap">Top 10 por volume de pautas/contatos</p>
+      <canvas id="chartVeiculos"></canvas>
+    </div>
+    <div class="chart-card tall">
+      <h3>Jornalistas mais acionados</h3>
+      <p class="cap">Top 10 por número de registros</p>
+      <canvas id="chartJornalistas"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- ================= FEED ================= -->
+<section class="section" id="feedSection">
+  <div class="section-head">
+    <div>
+      <p class="eyebrow">Registro</p>
+      <h2>Clipping de ações</h2>
+    </div>
+    <div class="feed-controls">
+      <div class="view-toggle">
+        <button id="viewCardsBtn" class="active" type="button">Cartões</button>
+        <button id="viewTableBtn" type="button">Tabela</button>
+      </div>
+      <button class="export-btn" id="exportBtn" type="button">⇩ Exportar CSV filtrado</button>
+    </div>
+  </div>
+
+  <div id="cardsView" class="cards-grid"></div>
+
+  <div id="tableView" class="table-wrap hidden">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Data</th><th>Veículo</th><th>Jornalista</th><th>Matéria/Oportunidade</th>
+          <th>Ação</th><th>Retorno</th><th>Contato</th><th>Análise</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <div id="emptyState" class="empty-state hidden">
+    <h3>Nenhum registro encontrado</h3>
+    <p>Ajuste os filtros acima para ver outras ações.</p>
+  </div>
+</section>
+
+<footer>
+  <div class="foot-inner">
+    <span>Painel de relacionamento com a imprensa · Betano × Grupo In Press</span>
+    <span>Fonte dos dados: <a id="sheetLink" href="#" target="_blank" rel="noopener">planilha do time</a> · atualização automática ao abrir a página</span>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO
+   — edite aqui se a planilha de origem mudar de endereço —
+   ============================================================ */
+const CONFIG = {
+  // link da planilha publicada (Arquivo > Compartilhar > Publicar na web > CSV)
+  SHEET_CSV_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vThOFU35sGrb-B8kKjDAX-XeVvrCz_zpZ2mAG_t_-rLjdorIUYRBgkcnccz7U7B9WDCmsuNB5Ha-uUa/pub?output=csv",
+  SHEET_VIEW_URL: "https://docs.google.com/spreadsheets/d/e/2PACX-1vThOFU35sGrb-B8kKjDAX-XeVvrCz_zpZ2mAG_t_-rLjdorIUYRBgkcnccz7U7B9WDCmsuNB5Ha-uUa/pubhtml"
+};
+
+document.getElementById('sheetLink').href = CONFIG.SHEET_VIEW_URL;
+
+/* ============================================================
+   DADOS EMBUTIDOS (fallback offline)
+   Exportados da última planilha compartilhada com o Claude.
+   Se a busca ao vivo falhar (ex.: sem internet, CORS bloqueado
+   ao abrir o arquivo localmente), o painel usa estes registros
+   para nunca ficar vazio.
+   ============================================================ */
+const SEED_DATA = [{"data": "2024-09-26", "materia": "https://oglobo.globo.com/economia/noticia/2024/09/26/o-que-o-governo-esta-planejando-para-reduzir-o-endividamento-com-bets-entenda.ghtml", "veiculo": "O Globo", "jornalista": "Manoel Ventura", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem sobre as medidas estudadas pelo governo para enfrentar o endividamento associado às apostas, abordando iniciativas regulatórias, educação financeira e mecanismos de proteção ao consumidor.", "retorno": "Contato feito", "retorno_detalhe": "Encontro de relacionamento realizado", "contato": ""}, {"data": "2026-06-03", "materia": "https://valor.globo.com/financas/noticia/2024/06/03/setor-financeiro-se-movimenta-para-atender-bets.ghtml", "veiculo": "Valor Econômico", "jornalista": "Álvaro Campos", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem analisa como o crescimento das apostas passou a competir com outras formas de alocação de recursos, especialmente investimentos financeiros, discutindo os impactos desse comportamento sobre o mercado de capitais e o consumo das famílias.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo enviado sobre regulamentação - mais pertinente à pauta", "contato": "(11)99683-8151"}, {"data": "2026-03-08", "materia": "https://oglobo.globo.com/economia/noticia/2026/03/08/bets-comunicacoes-de-operacoes-suspeitas-envolvendo-casas-de-apostas-disparam-em-2025.ghtml", "veiculo": "O Globo", "jornalista": "Thaís Barcellos", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem mostra como a regulamentação aumentou o número de comunicações de operações suspeitas ao Coaf e analisa os desafios da fiscalização financeira diante da permanência de um mercado ilegal expressivo.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo enviado sobre regulamentação - mais pertinente à pauta", "contato": "(21)97122-8681"}, {"data": "2026-04-24", "materia": "https://www.cnnbrasil.com.br/economia/macroeconomia/governo-bloqueia-28-plataformas-por-apostas-em-mercado-de-previsoes/", "veiculo": "CNN", "jornalista": "Elis Barreto", "acao": "Contato feito", "acao_detalhe": "", "analise": "O Ministério da Fazenda bloqueou dezenas de plataformas (como Kalshi e Polymarket) que disfarçavam apostas sobre eventos reais (como eleições e clima) de \"produtos financeiros\". A medida visa frear o superendividamento antes que um novo mercado sem regulação se consolide.", "retorno": "Contato feito", "retorno_detalhe": "Envio de estudo sobre regulamentação - jornalista agradeceu e mostrou interesse em receber novos conteúdos - adicionou no WhatsApp", "contato": "elis.barreto@cnnbrasil.com.br"}, {"data": "2026-04-26", "materia": "https://istoedinheiro.com.br/bets-apostas-vicio-anbima", "veiculo": "Istoé Dinheiro", "jornalista": "Tatiana Schnoor", "acao": "Contato feito", "acao_detalhe": "", "analise": "A pesquisa \"Raio X do Investidor\" mostra uma migração alarmante de apostadores casuais para o perfil de \"jogadores problemáticos\" ou de risco moderado. A compulsão afeta sobretudo jovens da classe C, destruindo sua capacidade de poupança.", "retorno": "Contato feito", "retorno_detalhe": "Disse que não tem interesse em aproximação/conversa", "contato": ""}, {"data": "2026-05-30", "materia": "https://blogs.correiobraziliense.com.br/capital-sa/2026/05/30/projeto-de-lei-brasil-contra-as-bets-une-bolsonaristas-e-lulistas-no-congresso/", "veiculo": "Correio Braziliense", "jornalista": "Samanta Sallum", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem centrada no debate legislativo e político. Cabe envio do estudo sobre regulação, que contribui para a discussão sobre os efeitos do modelo regulatório e combate ao mercado ilegal.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-05-31", "materia": "MPF abre inquérito para investigar atuação do governo Lula na fiscalização das bets | VEJA", "veiculo": "Veja", "jornalista": "Robson Bonin", "acao": "Contato feito", "acao_detalhe": "", "analise": "Pauta sobre fiscalização, atuação do governo e ambiente regulatório. Excelente aderência ao estudo sobre mercado ilegal e regulação, especialmente sobre desafios da fiscalização e fortalecimento do mercado regulado.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-05-31", "materia": "Vício em bets e jogos online faz explodir afastamentos no trabalho", "veiculo": "O Globo", "jornalista": "Lauro Jardim", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria baseada em impactos do vício na saúde e no ambiente de trabalho. Tema sensível, com foco em consequências sociais. Não enviar estudos; não é uma pauta adequada para contraponto institucional.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-11", "materia": "https://www.estadao.com.br/brasil/bets-sao-um-assunto-de-saude-nao-e-da-area-economica-diz-arminio-fraga/", "veiculo": "Estadão", "jornalista": "Fabiana Cambricoli", "acao": "Contato feito", "acao_detalhe": "", "analise": "Discussão centrada na saúde pública e ludopatia. Tema sensível. Evitar envio de estudos como contraponto; apenas relacionamento institucional.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-11", "materia": "https://www.poder360.com.br/poder-congresso/lindbergh-defende-proibir-jogo-do-tigrinho-no-brasil/", "veiculo": "Poder 360", "jornalista": "Juliana Alves", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem sobre proposta legislativa e diferenciação entre modalidades de jogos. Cabe envio do estudo sobre mercado ilegal e regulação, contribuindo para o debate regulatório e de fiscalização.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo sobre regulação enviado", "contato": "juliana.alves@poder360.com.br"}, {"data": "2026-06-11", "materia": "https://www.gazetadopovo.com.br/economia/sigilo-bets-recuo-expoe-contradicao-crise-governo/", "veiculo": "Gazeta do Povo", "jornalista": "Rose Amantéa", "acao": "Contato feito", "acao_detalhe": "", "analise": "Matéria sobre transparência, autorizações e ambiente regulatório. Excelente aderência ao estudo sobre mercado ilegal e regulação, especialmente no eixo de governança e segurança jurídica.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo sobre regulação enviado", "contato": "roselainea@gazetadopovo.com.br"}, {"data": "2026-06-14", "materia": "https://www.infomoney.com.br/onde-investir/dinheiro-que-vai-para-a-bet-nao-vai-para-o-supermercado-diz-gestor-da-ibiuna/", "veiculo": "Infomoney", "jornalista": "Osni Alves", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem sobre impacto econômico das apostas no consumo das famílias. Melhor material é o estudo da LCA, por trazer dados sobre comprometimento de renda, crédito e inadimplência.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-14", "materia": "https://www1.folha.uol.com.br/mercado/2026/06/apostas-online-atraem-35-dos-paulistanos-em-busca-de-renda-extra.shtml", "veiculo": "Folha de S. Paulo", "jornalista": "Sem autor", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria sobre comportamento do consumidor e motivação econômica para apostar. O estudo da LCA é o mais aderente, pois contextualiza endividamento, inadimplência e a ausência de evidências de relação causal direta entre bets e aumento da inadimplência.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-14", "materia": "https://www.migalhas.com.br/quentes/457967/dino-critica-bets-e-big-techs-liberdade-nao-pode-proteger-vicios", "veiculo": "Migalhas", "jornalista": "Sem autor", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Reportagem sobre declarações do ministro e debate político. Enfoque predominantemente opinativo/jurídico. Se houver contato, enviar estudo sobre regulação, sem tom de contraponto.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-15", "materia": "Datafolha: visão de bets e jogos online são vício oscila para cima, diz Datafolha", "veiculo": "Folha de S. Paulo", "jornalista": "Joana Cunha", "acao": "Contato feito", "acao_detalhe": "", "analise": "Pesquisa de percepção sobre bets e jogos online como vício. Tema sensível, mas com base em dados. Cabe abordagem institucional leve, com eventual envio do estudo LCA se o foco for endividamento/percepção econômica.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-15", "materia": "Vício em bets: auditora viraliza ao contar história do irmão que morreu após adquirir dívida milionária com apostas online", "veiculo": "G1", "jornalista": "Malu Vieira", "acao": "Contato feito", "acao_detalhe": "", "analise": "Relato familiar sensível ligado à ludopatia. Não enviar estudo. Apenas contato institucional, com cuidado para não parecer tentativa de contraponto.", "retorno": "Contato feito", "retorno_detalhe": "Agradeceu e demonstoru interesse por novas pautas. Está na Bahia, considerar este recorte", "contato": ""}, {"data": "2026-06-15", "materia": "https://valorinveste.globo.com/blogs/alexandre-espirito-santo/coluna/banco-central-nao-faz-tigrinho.ghtml", "veiculo": "Valor Investe", "jornalista": "Alexandre Espírito Santo", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Texto não fala de bets, apenas usa o 'Tigrinho' como analogia às 'apostas' e decisões do BC.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-15", "materia": "Casas de apostas esportivas veem na Copa uma chance de recuperação", "veiculo": "Folha de S. Paulo - repostagem NYT", "jornalista": "Joe Drape", "acao": "Não entrar em contato", "acao_detalhe": "Veículo Internacional", "analise": "Matéria de mercado internacional sobre Copa como oportunidade de recuperação para casas de apostas. Não priorizaria contato, por ser repostagem NYT e sem gancho direto com regulação brasileira.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-16", "materia": "Bets e Copa do Mundo: combinação pode aumentar o risco de dependência?", "veiculo": "Estadão", "jornalista": "Victória Ribeiro", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria sobre risco de dependência durante a Copa. Tema sensível, com foco em saúde e comportamento. Não enviar estudo; abordagem apenas se for institucional e sem anexo.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-16", "materia": "Vício em bets: grupo de apoio de jogadores anônimos da BA aponta aumento de integrantes após indicações de inteligência artificial", "veiculo": "G1", "jornalista": "", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria sobre aumento de busca por apoio para vício em apostas. Tema sensível e de saúde/comportamento. Não enviar estudo; evitar abordagem ativa.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-17", "materia": "Datafolha: Percepção dos brasileiros de que bets e jogos online são vício cresce", "veiculo": "Infomoney", "jornalista": "Caio César", "acao": "Contato feito", "acao_detalhe": "", "analise": "Repercussão de pesquisa Datafolha sobre percepção de bets como vício. Tema de dados e percepção pública. Cabe contato leve; LCA pode ser útil se a conversa avançar para endividamento/economia das famílias.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-17", "materia": "FUTEBOL E BETS: como a relação dos esportes com apostas atrai adolescentes (especialmente MENINOS) | Estadão", "veiculo": "Estadão", "jornalista": "Roseann Kennedy", "acao": "Contato feito", "acao_detalhe": "", "analise": "Matéria sobre relação entre futebol, bets e atração de adolescentes. Tema sensível, envolvendo menores e risco de exposição. Não enviar estudo; abordagem institucional cuidadosa, sem anexo.", "retorno": "Contato feito", "retorno_detalhe": "Agradeceu informações e disse que volta a nos procurar.", "contato": ""}, {"data": "2026-06-17", "materia": "As bets são a bola da vez do crime organizado', alerta promotor de Justiça", "veiculo": "Estado de Minas", "jornalista": "Ana Luiza Soares", "acao": "Contato feito", "acao_detalhe": "", "analise": "Foco na relação entre mercado ilegal e crime organizado. Estudo sobre mercado ilegal complementa a discussão.", "retorno": "Aguardando resposta", "retorno_detalhe": "Envio do estudo sobre regulação", "contato": "analuizasoares361@gmail.com"}, {"data": "2026-06-17", "materia": "Fazenda vai criar extrato de perdas e ganhos para apostadores de bets", "veiculo": "UOL", "jornalista": "Alexandre Novais Garcia", "acao": "Tentando contato", "acao_detalhe": "", "analise": "Entrevista com secretária da SPA sobre extrato de perdas e ganhos, autoexclusão, publicidade e jogo responsável. Cabe abordagem com estudo sobre regulação, pois a pauta é institucional/regulatória.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-17", "materia": "Não utilize as bets como meio para aumentar sua renda e pagar as contas", "veiculo": "Valor Investe", "jornalista": "Hudson Bessa", "acao": "Tentando contato", "acao_detalhe": "", "analise": "Coluna de educação financeira orientando não usar bets como fonte de renda. Tema sensível, mais opinativo e voltado ao investidor. Eu não enviaria estudo; no máximo contato institucional sem contraponto.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-18", "materia": "Arrecadação com tributação de bets é de R$ 9 bilhões por ano, diz Durigan | Brasil | Valor Econômico", "veiculo": "Valor Econômico", "jornalista": "Mariana Andrade", "acao": "Contato feito", "acao_detalhe": "", "analise": "Matéria sobre arrecadação, tributação e impacto fiscal da regulamentação. Encaixe direto para o estudo sobre mercado ilegal e regulação, que discute como o desenho regulatório influencia a migração para o mercado legal e a arrecadação.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-18", "materia": "Mulheres e jovens pagam a conta do avanço das bets no país", "veiculo": "UOL", "jornalista": "Maria Prata", "acao": "Contato feito", "acao_detalhe": "", "analise": "Coluna sobre impactos sociais das apostas, com foco em grupos vulneráveis. Tema sensível e opinativo. Melhor estratégia é apenas estabelecer relacionamento institucional, sem envio de estudos neste primeiro contato.", "retorno": "Não deu resposta", "retorno_detalhe": "Mensagem enviada", "contato": "(11)98233-3194"}, {"data": "2026-06-18", "materia": "https://www.estadao.com.br/brasil/como-as-bets-atraem-adolescentes-e-atrasam-ate-a-entrada-na-faculdade/", "veiculo": "Estadão", "jornalista": "Roseann Kennedy", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem sobre comportamento, educação e adolescentes. Tema sensível. Não enviar estudos; apenas aproximação institucional, caso pertinente.", "retorno": "Contato feito", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-18", "materia": "https://exame.com/invest/minhas-financas/canetas-de-emagrecimento-e-bets-entram-na-mira-dos-fraudadores-diz-serasa/", "veiculo": "Exame", "jornalista": "Rebecca Crepaldi", "acao": "Contato feito", "acao_detalhe": "", "analise": "O gigantismo do fluxo financeiro das bets atraiu o crime digital. A Serasa aponta que as plataformas viraram alvo central para golpes de roubo de identidade e criação de cadastros falsos, explorando a alta liquidez do setor.", "retorno": "Contato feito", "retorno_detalhe": "Se colocou à disposição quando tivermos pautas e oportunidades", "contato": ""}, {"data": "2026-06-19", "materia": "TJDFT manda bet devolver R$ 180 mil a policial militar viciado em Tigrinho", "veiculo": "Metrópoles", "jornalista": "Andreza Matais", "acao": "Contato feito", "acao_detalhe": "Por e-mail", "analise": "A matéria relata uma decisão judicial envolvendo um apostador diagnosticado com ludopatia, destacando o entendimento da Justiça sobre a vulnerabilidade do consumidor e a responsabilidade da plataforma no caso concreto.", "retorno": "Aguardando resposta", "retorno_detalhe": "Mensagem enviada", "contato": "andreza.matais@metropoles.com"}, {"data": "2026-06-19", "materia": "25 milhões de pessoas usam plataformas ilegais de apostas online, diz ministro da Justiça | G1", "veiculo": "G1", "jornalista": "Alexandro Martello, Mariana Assis", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem destaca a dimensão do mercado ilegal de apostas no Brasil e os desafios enfrentados pelo governo para ampliar a fiscalização, proteger consumidores e fortalecer o mercado regulado.", "retorno": "Contato feito", "retorno_detalhe": "Contato feito com Mariana Assis", "contato": ""}, {"data": "2026-06-19", "materia": "Encontro via In Press 1/07", "veiculo": "TechTudo", "jornalista": "Raquel Alice de Carvalho", "acao": "Encontro In Press", "acao_detalhe": "Encontro In Press", "analise": "", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-19", "materia": "E se acabarem as bets? - 18/06/2026 - Opinião - Folha", "veiculo": "Folha de S. Paulo", "jornalista": "Associação de Mulheres da Indústria do Gaming", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "Artigo de opinião que discute os possíveis impactos econômicos, regulatórios e sociais de uma eventual proibição das apostas no Brasil, sob a perspectiva de representantes da indústria.", "retorno": "Contato feito", "retorno_detalhe": "Foi enviado no grupo de WhatsApp e sugestão de contato institucional da Betano com a associação", "contato": ""}, {"data": "2026-06-22", "materia": "https://www.estadao.com.br/economia/bets-ilegais-recursos-fintechs-sem-autorizacao-bc-fazenda/", "veiculo": "Estadão", "jornalista": "Cícero Cotrim", "acao": "Contato feito", "acao_detalhe": "", "analise": "A matéria mostra como operadores ilegais utilizam instituições financeiras e fintechs sem autorização para movimentar recursos, abordando os desafios da fiscalização financeira e do combate às operações clandestinas.", "retorno": "Contato feito", "retorno_detalhe": "Agradeceu e disse que aceita receber pautas e estudos", "contato": ""}, {"data": "2026-06-22", "materia": "https://www.cnnbrasil.com.br/economia/macroeconomia/governo-vai-penalizar-influenciadores-que-divulgarem-bets-ilegais/", "veiculo": "CNN", "jornalista": "Victória Queiroz", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem apresenta as novas medidas do governo para responsabilizar influenciadores que promovam plataformas ilegais de apostas, reforçando o endurecimento da regulamentação e da fiscalização da publicidade do setor.", "retorno": "Contato feito", "retorno_detalhe": "Agradeceu e disse que aceita receber pautas e estudos", "contato": ""}, {"data": "2026-06-22", "materia": "Decreto fecha lacuna que permitia atuação de bets ilegais, diz regulador de apostas", "veiculo": "Folha de S. Paulo", "jornalista": "Pedro Teixeira", "acao": "Contato feito", "acao_detalhe": "", "analise": "A matéria aborda as mudanças promovidas pelo governo para restringir a atuação de plataformas ilegais, destacando o aperfeiçoamento da regulamentação e os mecanismos adotados para reforçar a fiscalização do setor.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-22", "materia": "https://revistaoeste.com/economia/lula-culpa-ibets-i-por-crise-das-familias-mas-setor-arrecada-bilhoes-para-o-governo/", "veiculo": "Revista Oeste", "jornalista": "Carlo Cauti; Edilson Salgueiro", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem questiona a narrativa de que as apostas seriam responsáveis pelo endividamento das famílias, contrapondo esse discurso ao aumento da arrecadação pública proveniente da regulamentação do setor e defendendo uma abordagem mais ampla sobre os fatores econômicos envolvidos.", "retorno": "Contato feito", "retorno_detalhe": "Carlo Cauti recebeu os estudos e aceita receber novidades sempre que tivermos. Tem interesse em falar com MKT sobre anúncios", "contato": "(19)97128-3448"}, {"data": "2026-06-22", "materia": "https://www.terra.com.br/diversao/gente/como-a-torcida-contra-a-globo-faz-publico-passar-pano-para-caze-sobre-bets,ba8a9e5a5108129dfcccb439931c82c3qhxlerpj.html#google_vignette", "veiculo": "UOL", "jornalista": "Jeff Benício", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria não é sobre bets, mas sobre dinâmica de engajamento e fãs da Cazé TV, apenas cita caso com bets como exemplo", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-22", "materia": "https://neomondo.org.br/colunistas/a-insustentavel-riqueza-das-bets", "veiculo": "Neomondo", "jornalista": "Alexandre Turra", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "Artigo opinativo que questiona o crescimento do setor sob a ótica da sustentabilidade social, defendendo que os ganhos econômicos das apostas são acompanhados por impactos negativos para a sociedade. O texto tem caráter analítico e opinativo.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-22", "materia": "https://www.estadao.com.br/tv/economia/o-que-explica-o-crescimento-das-bets-no-brasil/", "veiculo": "Estadão", "jornalista": "Camila Farani", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "A matéria em vídeo do Estadão sintetiza o fenômeno das apostas no país como o resultado de uma \"tempestade perfeita\". O crescimento exponencial é explicado pela combinação de três fatores principais: a forte cultura de paixão nacional pelo futebol, a hiperconectividade (com a popularização do Pix e de smartphones), e a agressividade do marketing digital, que utiliza influenciadores e patrocínios milionários para normalizar o jogo e criar a ilusão de ganho fácil e rápido em um cenário de vulnerabilidade econômica.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-22", "materia": "https://www.uol.com.br/universa/noticias/redacao/2026/06/20/vicio-em-bets-leva-familias-a-crises-e-sobrecarrega-mulheres.ghtm", "veiculo": "UOL", "jornalista": "Sem autor", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Reportagem sobre os impactos familiares da ludopatia, mostrando como o vício em apostas afeta a dinâmica doméstica, amplia o endividamento e recai especialmente sobre as mulheres como principais responsáveis pela reorganização financeira e emocional da família.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "https://noticias.uol.com.br/cotidiano/ultimas-noticias/2026/06/23/nunca-contou-ele-escondia-vicio-em-apostas-e-divida-de-r-15-milhao.ghtm", "veiculo": "UOL", "jornalista": "Igor Ribeiro", "acao": "Contato feito", "acao_detalhe": "", "analise": "Relatos reais expõem o drama da dependência oculta, onde indivíduos escondem o vício até acumularem dívidas milionárias (como o caso de R$ 1,5 milhão), desestruturando famílias inteiras antes que qualquer sinal de ajuda seja percebido.", "retorno": "Não deu resposta", "retorno_detalhe": "Sem resposta", "contato": "(11)92015-8721"}, {"data": "2026-06-23", "materia": "Como a Copa do Mundo escancara o avanço das bets - Nexo Jornal", "veiculo": "Nexo", "jornalista": "Mariana Souza", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem analisa como a Copa do Mundo amplia a exposição das empresas de apostas e discute seus impactos econômicos e sociais, abordando temas como publicidade, consumo, endividamento e regulamentação do setor.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo do LCA sobre inadimplência enviado - mais pertinente à pauta", "contato": "(41)8799-3154"}, {"data": "2026-06-23", "materia": "O Brasil virou o 5º maior mercado de apostas do mundo em 12 meses. Isso aconteceu por acaso? - Estadão", "veiculo": "Estadão", "jornalista": "Camila Farani", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "Artigo de opinião que analisa os fatores que impulsionaram a rápida expansão do mercado de apostas no Brasil após a regulamentação. A autora argumenta que o crescimento do setor decorre da combinação entre avanço tecnológico, mudanças regulatórias, demanda reprimida e maior segurança jurídica, defendendo que o fenômeno é resultado da evolução do mercado e não um processo espontâneo.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "https://www.estadao.com.br/opiniao/colunas-do-dia/economia/duquesa-de-tax/tributacao-bets-mais-leve-loterias-tradicionais/", "veiculo": "Estadão", "jornalista": "Duquesa de tax", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "Coluna opinativa que discute a carga tributária incidente sobre as apostas em comparação às loterias tradicionais, analisando possíveis distorções do sistema tributário e seus efeitos econômicos.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "Bets: sem publicidade legal, vence o ilegal", "veiculo": "Jota", "jornalista": "Tiago Gomes", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "Artigo de opinião que defende a importância de um ambiente regulatório equilibrado para fortalecer o mercado legal de apostas, discutindo os efeitos das restrições à publicidade sobre a competitividade do setor.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "Gerente é condenado por desviar R$ 170 mil de empresa para apostas online", "veiculo": "UOL", "jornalista": "Graciliano Rocha", "acao": "Tentando contato", "acao_detalhe": "", "analise": "Reportagem sobre um caso criminal envolvendo desvio de recursos corporativos para financiar apostas online. O foco é o crime financeiro e suas consequências jurídicas, utilizando as apostas como contexto do caso.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "Vício em apostas: preocupação com jovens cresce na Copa; veja vídeo", "veiculo": "Folha de S. Paulo", "jornalista": "Agência de notícias", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Reportagem sobre o aumento da preocupação com a influência das apostas entre jovens durante grandes eventos esportivos, abordando especialistas, prevenção e riscos relacionados à exposição ao tema.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-24", "materia": "https://veja.abril.com.br/coluna/radar-economico/betano-enfrenta-novo-problema-na-justica-trabalhista/", "veiculo": "Veja Negócios", "jornalista": "Machado da Costa", "acao": "Contato feito", "acao_detalhe": "Edu está em contato com Veja Negócios para apurar como foi a condução da matéria internamente", "analise": "O setor também enfrenta pressões internas e regulatórias no âmbito corporativo, com grandes operadoras (como a Betano) enfrentando processos e novas contestações na Justiça do Trabalho.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-24", "materia": "https://veja.abril.com.br/politica/erika-hilton-vai-ao-mpf-para-barrar-propaganda-de-bets-por-comentaristas-na-copa/", "veiculo": "Veja", "jornalista": "Laila Nery", "acao": "Tentando contato", "acao_detalhe": "", "analise": "A deputada Erika Hilton acionou o Ministério Público Federal (MPF) para barrar a publicidade de bets feita por comentaristas durante a cobertura da Copa do Mundo, tentando frear a exposição em massa e a normalização do jogo durante grandes eventos.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-29", "materia": "Conar processa 3 ações de bets nas transmissões da CazéTV", "veiculo": "Meio e Mensagem", "jornalista": "Bárbara Sacchitiello", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "O Conar determinou a suspensão preventiva de três ações publicitárias de casas de apostas veiculadas na CazéTV por possível descumprimento das regras de autorregulamentação.", "retorno": "Contato feito", "retorno_detalhe": "estudo sobre mercado regular enviado", "contato": ""}, {"data": "2026-06-29", "materia": "Copa do Mundo amplia golpes de bets e deepfakes no Brasil - Canaltech", "veiculo": "Canaltech", "jornalista": "Marcelo Fischer Salvatico", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "A matéria alerta para o aumento de golpes envolvendo apostas durante a Copa do Mundo, com uso de deepfakes e páginas falsas que simulam promoções utilizando a imagem de atletas.", "retorno": "Contato feito", "retorno_detalhe": "estudo sobre mercado regular enviado", "contato": ""}, {"data": "2026-06-29", "materia": "CazéTV e bets: advogados veem lacuna em legislação - 29/06/2026 - Painel S.A. - Folha", "veiculo": "Folha de S. Paulo", "jornalista": "Alex Sabino (interino), Luana Franzão e Maria Clara Guilherme", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "Emissoras de TV hoje enfrentam um vácuo regulatório e não são punidas por exibir propagandas de operadoras irregulares.", "retorno": "Contato feito", "retorno_detalhe": "Alex Sabino (estudo sobre mercado regular enviado)", "contato": ""}, {"data": "2026-06-29", "materia": "Epidemia de bets tem solução? O que o Brasil pode aprender com outros países - Estadão", "veiculo": "Estadão", "jornalista": "Edison Veiga", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "A reportagem analisa experiências internacionais na regulamentação das apostas esportivas e discute como mecanismos como limites de gastos, monitoramento de comportamento e ferramentas de jogo responsável podem servir de referência para o modelo brasileiro.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-30", "materia": "Durigan promete novas restrições à publicidade de bets", "veiculo": "Poder 360", "jornalista": "Julia Amoedo", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "A reportagem informa que o ministro da Fazenda, Dario Durigan, anunciou que o governo pretende adotar novas restrições à publicidade das casas de apostas, por meio de atos administrativos ou, se necessário, medida provisória, reforçando a agenda de proteção ao consumidor.", "retorno": "Contato feito", "retorno_detalhe": "e-mail + estudo regulação enviado", "contato": ""}, {"data": "2026-06-30", "materia": "OPINIÃO. As bets, como estão, são o gol contra da Copa - Brazil Journal", "veiculo": "Brazil Journal", "jornalista": "José Del Chiaro", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Em artigo de opinião, o autor critica o volume e a intensidade da publicidade das casas de apostas durante a Copa do Mundo, defendendo que o modelo atual gera desgaste para o esporte e para a sociedade.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-30", "materia": "“Bancada das bets”: quem são os aliados das casas de apostas no Congresso Nacional", "veiculo": "Agência Pública", "jornalista": "Rafael Oliveira", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A reportagem mapeia a chamada \"bancada das bets\" no Congresso Nacional, identificando deputados e senadores que atuaram em defesa de interesses do setor de apostas durante a tramitação da regulamentação e em articulações políticas posteriores.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-04-23", "materia": "https://valor.globo.com/financas/noticia/2026/04/23/bets-tambem-disputam-bolso-do-investidor.ghtml", "veiculo": "Valor Econômico", "jornalista": "Adriana Cotias", "acao": "Contato feito", "acao_detalhe": "", "analise": "As bets saíram do campo do entretenimento e passaram a competir diretamente pelo orçamento que o brasileiro antes destinava a investimentos tradicionais, canibalizando a formação de poupança no país.", "retorno": "Não deu resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-04-28", "materia": "https://oglobo.globo.com/blogs/miriam-leitao/post/2026/04/apostas-em-bets-tiraram-r-1438-bilhoes-do-comercio-em-dois-anos-mostra-estudo-inedito-da-cnc.ghtml", "veiculo": "O Globo", "jornalista": "Luciana Casemiro", "acao": "Contato feito", "acao_detalhe": "", "analise": "Um estudo da CNC revelou o impacto macroeconômico devastador do setor: em apenas dois anos, as apostas drenaram R$ 14,38 bilhões do comércio tradicional, subtraindo recursos que iriam para o consumo de bens essenciais e serviços.", "retorno": "Não deu resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-06", "materia": "Bets usam 'texto-foguete' e promoções restritas para reter jogadores e captar clientes fiéis ", "veiculo": "Folha de S. Paulo", "jornalista": "Pedro S. Teixeira", "acao": "Contato feito", "acao_detalhe": "Pedro recebeu materiais e ficou interessado em encontro", "analise": "A Folha de S.Paulo analisa táticas de marketing digital e o uso de mensagens curtas para engajar usuários em plataformas de apostas após o cadastro esportivo. O texto indica um movimento de atenção de especialistas e do mercado para a transparência em promoções personalizadas, o que reforça a necessidade de manutenção de rígidos padrões de conformidade. A matéria também saiu no impresso", "retorno": "Retorno", "retorno_detalhe": "Pedro recebeu materiais e quer encontro", "contato": ""}, {"data": "2026-07-02", "materia": "Blindagem ao cidadão ou arma eleitoral? O que está por trás de projeto para proibir bets", "veiculo": "Agência Pública", "jornalista": "Ed Wanderley, Anna Greg", "acao": "Contato feito", "acao_detalhe": "Ed Wanderley", "analise": "Reportagem investigativa da Agência Pública avalia os bastidores do Projeto de Lei nº 1808/2026, apresentado pelo PT, que visa proibir a atividade no país. A análise aponta que a iniciativa mistura a busca por proteção social com estratégias políticas para constranger adversários no parlamento, contando inclusive com suporte de frentes conservadoras.", "retorno": "Retorno", "retorno_detalhe": "Ed revebeu estudos e quer manter contato para futuras reportagens", "contato": ""}, {"data": "2026-07-02", "materia": "Uma defesa da ineficiência ", "veiculo": "Folha de S. Paulo", "jornalista": "Hélio Schwartsman", "acao": "Contato feito", "acao_detalhe": "Colunista", "analise": "O colunista Hélio Schwartsman argumenta na Folha de S.Paulo que a regulação de mercados associados a comportamentos compulsivos exige a introdução proposital de fricções operacionais. O jornalista propõe que mecanismos voltados a reduzir a agilidade e a facilidade extrema de depósitos digitais podem ser ferramentas de saúde pública mais eficientes do que a repressão legal pura e simples. A matéria também foi publicada no jornal impresso.", "retorno": "Não deu resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-07", "materia": "Temer revê bets, chama 8/1 de golpe e fala sobre Vorcaro: \"Muito doce\"", "veiculo": "Correio Braziliense", "jornalista": "Letícia Passos", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Repercussão de entrevista concedida ao UOL em que Michel Temer faz uma autocrítica sobre a autorização das apostas esportivas e defende maior fiscalização e restrições ao uso de recursos de programas sociais. Como o conteúdo tem natureza política, parte de uma declaração já concedida a outro veículo e não abre uma apuração específica sobre o setor, recomenda-se apenas monitoramento, sem abordagem ativa.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-08", "materia": "O Brasil perder para as bets dói mais que perder a Copa", "veiculo": "Folha de S.Paulo", "jornalista": "Daniel Guanaes", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Artigo de opinião com posicionamento crítico e tese fechada sobre a exposição das bets durante a Copa, relacionando a presença publicitária do setor a impactos sociais e de saúde. Por se tratar de texto opinativo assinado por colaborador e sem abertura para contraponto jornalístico, não se recomenda contato. O conteúdo deve ser acompanhado como sinal reputacional do aumento da crítica à associação entre apostas e esporte.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-08", "materia": "As bets não ganham quando você perde; ganham porque a matemática sempre foi delas", "veiculo": "Estadão", "jornalista": "Camila Farani", "acao": "Não entrar em contato", "acao_detalhe": "Colunista", "analise": "Coluna de opinião que explica o modelo de negócio das operadoras a partir de probabilidade, precificação, dados e margens embutidas nas cotações. O texto oferece uma leitura mais técnica e profissional do setor, ao mesmo tempo que reforça a desvantagem matemática do apostador e afasta a ideia de enriquecimento rápido. Cabe contato de relacionamento, sem tom defensivo, para apresentar pautas futuras sobre tecnologia, inteligência de dados, transparência e jogo responsável.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-06", "materia": "Polícia Federal mira 87 empresas suspeitas de lavar dinheiro de bets ilegais com cripto", "veiculo": "Folha de S.Paulo", "jornalista": "Pedro S. Teixeira", "acao": "Contato feito", "acao_detalhe": "", "analise": "A matéria trata de uma operação da Polícia Federal contra empresas suspeitas de lavar recursos provenientes de plataformas ilegais por meio de criptoativos. Por envolver investigação criminal em andamento, a recomendação é apenas monitorar a repercussão e observar se o conteúdo diferencia adequadamente o mercado regulado das operações ilegais. Uma abordagem ativa neste momento pode ser interpretada como tentativa de interferir ou desviar o foco da apuração.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-07", "materia": "Sem regulamentação, mercados preditivos crescem no Brasil e viram desafio para o governo", "veiculo": "G1", "jornalista": "Matheus Gouvea de Andrade", "acao": "Tentando contato", "acao_detalhe": "Buscando contato", "analise": "A reportagem aborda a expansão de mercados preditivos baseados em criptoativos fora do marco regulatório tradicional. O tema oferece uma oportunidade de relacionamento para reforçar, em pautas futuras, a distinção entre plataformas autorizadas de apostas esportivas e modelos que operam sem enquadramento específico, além de discutir tecnologia, compliance e segurança do consumidor.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-07", "materia": "Não é azar, é de propósito: o cálculo por trás das bets para que o brasileiro perca sempre", "veiculo": "Agência Pública", "jornalista": "Ed Wanderley, Anna Greg", "acao": "Contato feito", "acao_detalhe": "Ed Wanderley", "analise": "Reportagem crítica que descreve o funcionamento estatístico, os algoritmos e a formação das cotações sob a tese de que a estrutura comercial das plataformas é desenhada para assegurar vantagem permanente às empresas. Como o enquadramento é investigativo e a narrativa já está consolidada, recomenda-se não realizar abordagem direta. O conteúdo deve ser monitorado como sinal reputacional sobre transparência, probabilidades e percepção de assimetria entre operador e usuário.", "retorno": "Retorno", "retorno_detalhe": "Recebeu estudos e quer manter contato", "contato": ""}, {"data": "2026-07-07", "materia": "As bets e a nova arquitetura da impulsividade humana", "veiculo": "Veja", "jornalista": "Ilana Pinsky", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Artigo de abordagem científica sobre fatores psicológicos, impulsividade, design de interface e facilidade de acesso nas apostas online. Por tratar de saúde mental e mecanismos de comportamento, a recomendação é não abordar a autora a partir desta publicação. A matéria deve servir como insumo para acompanhar o debate sobre proteção de públicos vulneráveis, comunicação responsável e recursos de prevenção disponíveis nas plataformas.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-06", "materia": "Defesa da CazéTV diz que probabilidade esportiva não é ação publicitária e nega irregularidades", "veiculo": "Folha de S.Paulo", "jornalista": "Pedro S. Teixeira", "acao": "Contato feito", "acao_detalhe": "", "analise": "A matéria apresenta os argumentos jurídicos da CazéTV em processo no Conar e discute os limites entre conteúdo informativo, entretenimento e publicidade. O tema é relevante para relacionamento com o jornalista, especialmente em pautas futuras sobre regras de comunicação, transparência de conteúdo patrocinado e boas práticas do setor. O contato deve ser institucional, sem comentar o mérito do caso específico ou assumir a defesa de terceiros. A matéria também foi publicada no impresso.", "retorno": "Retorno", "retorno_detalhe": "Recebeu estudos e quer marcar encontro", "contato": ""}, {"data": "2026-07-06", "materia": "Superbet anula apostas de longo prazo no Brasil campeão da Copa e reembolsa clientes", "veiculo": "BNLData", "jornalista": "Magno José", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Notícia sobre uma decisão operacional de concorrente, que cancelou mercados de longo prazo e reembolsou clientes. Não há oportunidade imediata de posicionamento ou relacionamento a partir deste conteúdo. Recomenda-se apenas monitorar a repercussão e registrar o caso como referência competitiva sobre gestão de mercados, comunicação com usuários e políticas de reembolso.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-05", "materia": "Artigo compara publicidade de bets à de produtos controlados", "veiculo": "Estadão", "jornalista": "Fabiano Lana", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Artigo de opinião com posicionamento crítico, que compara a expansão da publicidade de apostas à comunicação de produtos controlados e atribui ao lobby do setor influência sobre a legislação. Como o texto apresenta uma tese fechada e não abre espaço para apuração ou contraponto, recomenda-se apenas monitoramento. A publicação sinaliza a permanência de pressões por restrições mais severas à publicidade e ao patrocínio esportivo.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-05", "materia": "Sesi e Senai lançam cartilhas para conscientizar sobre riscos de bets", "veiculo": "Poder360", "jornalista": "CNI", "acao": "Tentando contato", "acao_detalhe": "Sugerir contato com a CNI para saber mais sobre a cartilha", "analise": "Conteúdo originalmente produzido pela CNI e republicado pelo Poder360 sobre cartilhas educativas voltadas a estudantes e trabalhadores da indústria. A abordagem é factual e preventiva, com foco em educação financeira, saúde emocional e sinais de perda de controle. Como não se trata de apuração original do veículo, não há oportunidade direta de contato com jornalista. O material pode ser usado como referência para iniciativas de educação e jogo responsável.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}];
+const SEED_EXPORTED_AT = "2026-07-13";
+
+/* ============================================================
+   ESTADO
+   ============================================================ */
+let RAW = [];
+let FILTERED = [];
+let VIEW = 'cards';
+let charts = {};
+
+const COLOR = {
+  teal:'#146B57', tealSoft:'#1FA37F', amber:'#B9791A', red:'#A23A26',
+  blue:'#2C5A8C', gold:'#C79A2B', slate:'#8A97A8'
+};
+
+const ACAO_TONE = {
+  'Contato feito':'teal', 'Entrar em contato':'blue', 'Tentando contato':'amber',
+  'Não entrar em contato':'red', 'Encontro In Press':'gold'
+};
+const RETORNO_TONE = {
+  'Contato feito':'teal', 'Aguardando resposta':'amber', 'Não deu resposta':'red',
+  'Retorno':'teal'
+};
+
+/* ============================================================
+   HELPERS
+   ============================================================ */
+function norm(s){ return (s||'').toString().replace(/\s+/g,' ').trim(); }
+
+function parseDateBR(str){
+  if(!str) return null;
+  str = str.toString().trim();
+  let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/); // ISO
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/); // DD/MM/YYYY (padrão BR) ou MM/DD/YYYY
+  if(m){
+    let a=+m[1], b=+m[2], y=+m[3];
+    if(a>12) return new Date(y, b-1, a);       // a só pode ser dia
+    if(b>12) return new Date(y, a-1, b);       // b só pode ser dia -> formato US
+    return new Date(y, b-1, a);                // ambíguo: assume DD/MM (locale BR)
+  }
+  let d = new Date(str);
+  return isNaN(d) ? null : d;
+}
+function fmtDate(d){
+  if(!d) return '—';
+  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' });
+}
+function fmtMonth(d){
+  return d.toLocaleDateString('pt-BR', { month:'short', year:'2-digit' }).replace('.','');
+}
+function isUrl(s){ return /^https?:\/\//i.test((s||'').trim()); }
+function escapeHtml(s){
+  return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function toneClass(map, value, fallback){ return map[norm(value)] || fallback || 'grey'; }
+
+/* ============================================================
+   CARGA DE DADOS
+   ============================================================ */
+function normalizeRecord(o){
+  // formato já normalizado, usado apenas para os dados embutidos (SEED_DATA)
+  return {
+    data: o.data ? new Date(o.data + 'T00:00:00') : null,
+    materia: o.materia||'', veiculo:norm(o.veiculo), jornalista:o.jornalista||'',
+    acao:norm(o.acao), acao_detalhe:o.acao_detalhe||'', analise:o.analise||'',
+    retorno:norm(o.retorno), retorno_detalhe:o.retorno_detalhe||'', contato:o.contato||''
+  };
+}
+
+// O carregamento ao vivo usa correspondência exata de cabeçalho, já que "Ação" e
+// "Ação (Detalhamento)" / "Retorno" e "Retorno (Detalhamento)" começam com o
+// mesmo texto e não podem ser diferenciados por um simples "startsWith".
+function normalizeLiveRow(row){
+  const keys = Object.keys(row);
+  const find = (target) => {
+    const exact = keys.find(k => norm(k).toLowerCase() === target.toLowerCase());
+    if(exact) return row[exact];
+    const starts = keys.find(k => norm(k).toLowerCase().startsWith(target.toLowerCase()) && !norm(k).toLowerCase().includes('detalhamento'));
+    return starts ? row[starts] : '';
+  };
+  return {
+    data: parseDateBR(find('Data')),
+    materia: find('Matéria/Oportunidade') || find('Materia/Oportunidade'),
+    veiculo: norm(find('Veículo') || find('Veiculo')),
+    jornalista: find('Jornalista'),
+    acao: norm(find('Ação') || find('Acao')),
+    acao_detalhe: row[keys.find(k => norm(k).toLowerCase()==='ação (detalhamento)'||norm(k).toLowerCase()==='acao (detalhamento)')] || '',
+    analise: find('Análise da Matéria') || find('Analise da Materia'),
+    retorno: norm(row[keys.find(k => norm(k).toLowerCase()==='retorno')] ?? ''),
+    retorno_detalhe: row[keys.find(k => norm(k).toLowerCase()==='retorno (detalhamento)')] || '',
+    contato: find('Contato')
+  };
+}
+
+async function loadLiveData(){
+  const res = await fetch(CONFIG.SHEET_CSV_URL, { cache:'no-store' });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  const parsed = Papa.parse(text.trim(), { header:true, skipEmptyLines:true });
+  if(!parsed.data || !parsed.data.length) throw new Error('Planilha vazia');
+  const rows = parsed.data
+    .map(normalizeLiveRow)
+    .filter(r => r.data || r.veiculo || r.jornalista);
+  if(!rows.length) throw new Error('Nenhuma linha reconhecida');
+  return rows;
+}
+
+function loadSeedData(){
+  return SEED_DATA.map(normalizeRecord);
+}
+
+function setStatus(kind, text){
+  const el = document.getElementById('dataStatus');
+  el.className = 'status ' + kind;
+  document.getElementById('dataStatusText').textContent = text;
+}
+
+function showOfflineBanner(msg){
+  document.getElementById('offlineBanner').innerHTML = `
+    <div class="banner offline">
+      <span>⚠ ${escapeHtml(msg)}</span>
+      <button type="button" onclick="init()">Tentar novamente</button>
+    </div>`;
+}
+function clearBanner(){ document.getElementById('offlineBanner').innerHTML = ''; }
+
+async function init(){
+  setStatus('offline','carregando…');
+  clearBanner();
+  try{
+    RAW = await loadLiveData();
+    setStatus('live','dados ao vivo da planilha');
+    document.getElementById('lastUpdated').textContent = 'Atualizado agora · ' + new Date().toLocaleString('pt-BR');
+  }catch(err){
+    RAW = loadSeedData();
+    setStatus('offline','usando cópia offline');
+    document.getElementById('lastUpdated').textContent = 'Exportado em ' + fmtDate(new Date(SEED_EXPORTED_AT + 'T00:00:00'));
+    showOfflineBanner('Não foi possível buscar a planilha ao vivo agora (' + err.message + '). Mostrando a última cópia salva.');
+  }
+  buildFilterOptions();
+  applyFilters();
+}
+
+/* ============================================================
+   FILTROS
+   ============================================================ */
+function buildFilterOptions(){
+  const fill = (id, values) => {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    sel.innerHTML = sel.options[0].outerHTML;
+    values.forEach(v => {
+      const opt = document.createElement('option');
+      opt.value = v; opt.textContent = v;
+      sel.appendChild(opt);
+    });
+    if(values.includes(current)) sel.value = current;
+  };
+  fill('fVeiculo', [...new Set(RAW.map(r=>r.veiculo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')));
+  fill('fAcao', [...new Set(RAW.map(r=>r.acao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')));
+  fill('fRetorno', [...new Set(RAW.map(r=>r.retorno).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')));
+}
+
+function applyFilters(){
+  const q = norm(document.getElementById('fSearch').value).toLowerCase();
+  const veic = document.getElementById('fVeiculo').value;
+  const acao = document.getElementById('fAcao').value;
+  const ret = document.getElementById('fRetorno').value;
+  const de = document.getElementById('fDe').value ? new Date(document.getElementById('fDe').value + 'T00:00:00') : null;
+  const ate = document.getElementById('fAte').value ? new Date(document.getElementById('fAte').value + 'T23:59:59') : null;
+
+  FILTERED = RAW.filter(r=>{
+    if(veic && r.veiculo !== veic) return false;
+    if(acao && r.acao !== acao) return false;
+    if(ret && r.retorno !== ret) return false;
+    if(de && (!r.data || r.data < de)) return false;
+    if(ate && (!r.data || r.data > ate)) return false;
+    if(q){
+      const hay = [r.materia,r.veiculo,r.jornalista,r.analise,r.acao_detalhe,r.retorno_detalhe].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('resultCount').textContent = FILTERED.length + ' de ' + RAW.length + ' registros';
+  renderKPIs(FILTERED);
+  renderCharts(FILTERED);
+  renderFeed(FILTERED);
+  renderTicker(RAW);
+}
+
+/* ============================================================
+   KPIs
+   ============================================================ */
+function renderKPIs(rows){
+  const total = rows.length;
+  const contatoFeito = rows.filter(r=>r.acao==='Contato feito').length;
+  const aguardando = rows.filter(r=>r.retorno==='Aguardando resposta').length;
+  const semContato = rows.filter(r=>r.acao==='Não entrar em contato').length;
+  const retornoPositivo = rows.filter(r=>r.retorno==='Contato feito'||r.retorno==='Retorno').length;
+  const veiculos = new Set(rows.map(r=>r.veiculo).filter(Boolean)).size;
+  const jornalistas = new Set(rows.map(r=>r.jornalista).filter(Boolean)).size;
+  const taxa = total ? Math.round((retornoPositivo/total)*100) : 0;
+
+  const items = [
+    {num:total, label:'Ações registradas', sub:'no período filtrado', accent:''},
+    {num:contatoFeito, label:'Contatos feitos', sub: total? Math.round(contatoFeito/total*100)+'% do total':'—', accent:'accent-teal'},
+    {num:aguardando, label:'Aguardando resposta', sub:'em aberto com o jornalista', accent:'accent-amber'},
+    {num:retornoPositivo, label:'Retornos positivos', sub:taxa+'% de taxa de retorno', accent:'accent-teal'},
+    {num:semContato, label:'Sem abordagem prevista', sub:'pautas sensíveis / fora de escopo', accent:'accent-red'},
+    {num:veiculos+' / '+jornalistas, label:'Veículos / jornalistas', sub:'únicos no recorte', accent:'accent-gold'},
+  ];
+  document.getElementById('kpiGrid').innerHTML = items.map(i=>`
+    <div class="kpi ${i.accent}">
+      <div class="num">${i.num}</div>
+      <div class="label">${i.label}</div>
+      <div class="sub">${i.sub}</div>
+    </div>`).join('');
+}
+
+/* ============================================================
+   GRÁFICOS
+   ============================================================ */
+function destroyChart(key){ if(charts[key]){ charts[key].destroy(); delete charts[key]; } }
+function baseFont(){ return { family:"Inter", size:11 }; }
+
+function renderCharts(rows){
+  renderFunil(rows);
+  renderDonut('chartAcao', rows, 'acao', ACAO_TONE);
+  renderDonut('chartRetorno', rows.filter(r=>r.retorno), 'retorno', RETORNO_TONE);
+  renderTimeline(rows);
+  renderTopBar('chartVeiculos', rows, 'veiculo');
+  renderTopBar('chartJornalistas', rows, 'jornalista');
+}
+
+function renderFunil(rows){
+  destroyChart('funil');
+  const total = rows.length;
+  const abordados = rows.filter(r=>['Contato feito','Tentando contato','Entrar em contato','Encontro In Press'].includes(r.acao)).length;
+  const respondidos = rows.filter(r=>r.retorno && r.retorno!=='Não deu resposta').length;
+  const positivos = rows.filter(r=>r.retorno==='Contato feito'||r.retorno==='Retorno').length;
+  const ctx = document.getElementById('chartFunil');
+  charts.funil = new Chart(ctx, {
+    type:'bar',
+    data:{
+      labels:['Pautas mapeadas','Abordagem realizada/em curso','Jornalista respondeu','Retorno positivo / encontro'],
+      datasets:[{
+        data:[total, abordados, respondidos, positivos],
+        backgroundColor:[COLOR.slate, COLOR.blue, COLOR.amber, COLOR.tealSoft],
+        borderRadius:4, barThickness:34
+      }]
+    },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>c.parsed.x+' registros'}} },
+      scales:{ x:{ beginAtZero:true, ticks:{font:baseFont()}, grid:{color:'#EFEAE0'} }, y:{ ticks:{font:baseFont()}, grid:{display:false} } }
+    }
+  });
+}
+
+function renderDonut(canvasId, rows, field, toneMap){
+  destroyChart(canvasId);
+  const counts = {};
+  rows.forEach(r=>{ const v = r[field] || 'Sem registro'; counts[v] = (counts[v]||0)+1; });
+  const labels = Object.keys(counts);
+  const toneToHex = {teal:COLOR.teal, amber:COLOR.amber, red:COLOR.red, blue:COLOR.blue, gold:COLOR.gold, grey:COLOR.slate};
+  const colors = labels.map(l => toneToHex[toneClass(toneMap,l)] || COLOR.slate);
+  const ctx = document.getElementById(canvasId);
+  charts[canvasId] = new Chart(ctx, {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data:labels.map(l=>counts[l]), backgroundColor:colors, borderColor:'#fff', borderWidth:2 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{ legend:{ position:'bottom', labels:{ font:baseFont(), boxWidth:10, padding:10 } } }
+    }
+  });
+}
+
+function renderTimeline(rows){
+  destroyChart('tempo');
+  const withDate = rows.filter(r=>r.data).sort((a,b)=>a.data-b.data);
+  const buckets = {};
+  withDate.forEach(r=>{
+    const key = r.data.getFullYear()+'-'+String(r.data.getMonth()+1).padStart(2,'0');
+    buckets[key] = (buckets[key]||0)+1;
+  });
+  const keys = Object.keys(buckets).sort();
+  const labels = keys.map(k=>{ const [y,m]=k.split('-'); return fmtMonth(new Date(+y,+m-1,1)); });
+  const ctx = document.getElementById('chartTempo');
+  charts.tempo = new Chart(ctx, {
+    type:'line',
+    data:{ labels, datasets:[{
+      data:keys.map(k=>buckets[k]), borderColor:COLOR.gold, backgroundColor:'rgba(199,154,43,0.15)',
+      fill:true, tension:0.35, pointRadius:3, pointBackgroundColor:COLOR.gold
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ y:{ beginAtZero:true, ticks:{stepSize:1, font:baseFont()}, grid:{color:'#EFEAE0'} }, x:{ ticks:{font:baseFont()}, grid:{display:false} } }
+    }
+  });
+}
+
+function renderTopBar(canvasId, rows, field){
+  destroyChart(canvasId);
+  const counts = {};
+  rows.forEach(r=>{ const v = r[field]; if(v) counts[v] = (counts[v]||0)+1; });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10).reverse();
+  const ctx = document.getElementById(canvasId);
+  charts[canvasId] = new Chart(ctx, {
+    type:'bar',
+    data:{ labels:top.map(t=>t[0]), datasets:[{ data:top.map(t=>t[1]), backgroundColor:COLOR.blue, borderRadius:3, barThickness:14 }] },
+    options:{
+      indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false} },
+      scales:{ x:{ beginAtZero:true, ticks:{stepSize:1, font:baseFont()}, grid:{color:'#EFEAE0'} }, y:{ ticks:{font:{family:'Inter',size:10.5}}, grid:{display:false} } }
+    }
+  });
+}
+
+/* ============================================================
+   TICKER
+   ============================================================ */
+function renderTicker(rows){
+  const recent = [...rows].filter(r=>r.data).sort((a,b)=>b.data-a.data).slice(0,14);
+  if(!recent.length){ document.getElementById('ticker').textContent = 'Sem ações registradas ainda.'; return; }
+  const items = recent.map(r=>`<span><b>${fmtDate(r.data)}</b> — ${escapeHtml(r.veiculo||'—')} · ${escapeHtml(r.jornalista||'—')} · ${escapeHtml(r.acao||'—')}</span>`);
+  document.getElementById('ticker').innerHTML = items.join('') + items.join('');
+}
+
+/* ============================================================
+   FEED (cards + tabela)
+   ============================================================ */
+function stampHtml(label, tone){
+  return `<span class="stamp ${tone}">${escapeHtml(label)}</span>`;
+}
+
+function renderFeed(rows){
+  const sorted = [...rows].sort((a,b)=> (b.data||0) - (a.data||0));
+  document.getElementById('emptyState').classList.toggle('hidden', sorted.length>0);
+  document.getElementById('cardsView').classList.toggle('hidden', VIEW!=='cards' || !sorted.length);
+  document.getElementById('tableView').classList.toggle('hidden', VIEW!=='table' || !sorted.length);
+
+  if(VIEW==='cards'){
+    document.getElementById('cardsView').innerHTML = sorted.map(r=>{
+      const acaoTone = toneClass(ACAO_TONE, r.acao, 'grey');
+      const retTone = r.retorno ? toneClass(RETORNO_TONE, r.retorno, 'grey') : null;
+      const materiaHtml = r.materia
+        ? (isUrl(r.materia)
+            ? `<a class="clip-materia" href="${escapeHtml(r.materia)}" target="_blank" rel="noopener">Ver matéria ↗</a>`
+            : `<div class="clip-materia notlink">${escapeHtml(r.materia)}</div>`)
+        : '';
+      const detailBits = [];
+      if(r.acao_detalhe) detailBits.push(`<div><b>Detalhe da ação:</b> ${escapeHtml(r.acao_detalhe)}</div>`);
+      if(r.retorno_detalhe) detailBits.push(`<div><b>Detalhe do retorno:</b> ${escapeHtml(r.retorno_detalhe)}</div>`);
+      if(r.contato) detailBits.push(`<div><b>Contato direto:</b> ${escapeHtml(r.contato)}</div>`);
+      return `
+      <article class="clip">
+        <div class="clip-top">
+          <div>
+            <div class="clip-veiculo">${escapeHtml(r.veiculo||'Veículo não informado')}</div>
+            <div class="clip-jornalista">${escapeHtml(r.jornalista||'Jornalista não informado')}</div>
+          </div>
+          <div class="clip-date">${fmtDate(r.data)}</div>
+        </div>
+        ${materiaHtml}
+        ${r.analise ? `<div class="clip-analise">${escapeHtml(r.analise)}</div>` : ''}
+        <div class="clip-badges">
+          ${stampHtml(r.acao || 'Sem ação registrada', acaoTone)}
+          ${r.retorno ? stampHtml(r.retorno, retTone) : stampHtml('Sem retorno ainda','grey')}
+        </div>
+        ${detailBits.length ? `<div class="clip-detail">${detailBits.join('')}</div>` : ''}
+      </article>`;
+    }).join('');
+  } else {
+    document.getElementById('tableBody').innerHTML = sorted.map(r=>`
+      <tr>
+        <td>${fmtDate(r.data)}</td>
+        <td>${escapeHtml(r.veiculo)}</td>
+        <td>${escapeHtml(r.jornalista)}</td>
+        <td class="td-materia">${r.materia ? (isUrl(r.materia)? `<a href="${escapeHtml(r.materia)}" target="_blank" rel="noopener">Ver matéria ↗</a>` : escapeHtml(r.materia)) : '—'}</td>
+        <td>${escapeHtml(r.acao)||'—'}</td>
+        <td>${escapeHtml(r.retorno)||'—'}</td>
+        <td>${escapeHtml(r.contato)||'—'}</td>
+        <td class="td-analise">${escapeHtml(r.analise)}</td>
+      </tr>`).join('');
+  }
+}
+
+/* ============================================================
+   EXPORTAÇÃO CSV
+   ============================================================ */
+function exportCsv(){
+  const headers = ['Data','Veículo','Jornalista','Matéria/Oportunidade','Ação','Ação (Detalhamento)','Análise da Matéria','Retorno','Retorno (Detalhamento)','Contato'];
+  const rows = FILTERED.map(r=>[
+    r.data ? r.data.toISOString().slice(0,10) : '',
+    r.veiculo, r.jornalista, r.materia, r.acao, r.acao_detalhe, r.analise, r.retorno, r.retorno_detalhe, r.contato
+  ]);
+  const esc = v => `"${(v||'').toString().replace(/"/g,'""')}"`;
+  const csv = [headers.map(esc).join(','), ...rows.map(r=>r.map(esc).join(','))].join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'acoes_imprensa_betano_filtrado.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ============================================================
+   EVENTOS
+   ============================================================ */
+['fSearch','fVeiculo','fAcao','fRetorno','fDe','fAte'].forEach(id=>{
+  const el = document.getElementById(id);
+  el.addEventListener(id==='fSearch' ? 'input' : 'change', applyFilters);
+});
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  document.getElementById('fSearch').value='';
+  document.getElementById('fVeiculo').value='';
+  document.getElementById('fAcao').value='';
+  document.getElementById('fRetorno').value='';
+  document.getElementById('fDe').value='';
+  document.getElementById('fAte').value='';
+  applyFilters();
+});
+document.getElementById('refreshBtn').addEventListener('click', init);
+document.getElementById('exportBtn').addEventListener('click', exportCsv);
+document.getElementById('viewCardsBtn').addEventListener('click', ()=>{ VIEW='cards'; document.getElementById('viewCardsBtn').classList.add('active'); document.getElementById('viewTableBtn').classList.remove('active'); renderFeed(FILTERED); });
+document.getElementById('viewTableBtn').addEventListener('click', ()=>{ VIEW='table'; document.getElementById('viewTableBtn').classList.add('active'); document.getElementById('viewCardsBtn').classList.remove('active'); renderFeed(FILTERED); });
+
+init();
+</script>
+</body>
+</html>
