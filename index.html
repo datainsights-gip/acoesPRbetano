@@ -1,0 +1,1307 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Imprensa &amp; Relacionamento — Betano × Grupo In Press</title>
+<meta name="description" content="Painel de acompanhamento de relações com a imprensa e ações em jogos e eventos — Betano × Grupo In Press">
+<meta name="robots" content="noindex, nofollow">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;0,9..144,700;1,9..144,500&family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.5.0/chart.umd.min.js"></script>
+
+<style>
+/* ============================================================
+   TOKENS
+   ============================================================ */
+:root{
+  --ink:        #0E1A2B;
+  --ink-2:      #16283F;
+  --ink-3:      #1D3350;
+  --rule:       #2C4162;
+  --paper:      #F6F1E3;
+  --paper-2:    #EEE6D1;
+  --paper-3:    #E4D9BC;
+  --rule-paper: #C9BC98;
+  --ink-text:   #211A0F;
+  --ink-text-soft: #5B5342;
+  --gold:       #C79A2B;
+  --gold-soft:  #E4C978;
+  --teal:       #146B57;
+  --teal-soft:  #DCEDE7;
+  --amber:      #B9791A;
+  --amber-soft: #F4E4C6;
+  --red:        #A23A26;
+  --red-soft:   #F3DCD3;
+  --blue:       #2C5A8C;
+  --blue-soft:  #DCE7F2;
+  --slate:      #64707F;
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SF Mono', monospace;
+}
+
+*{ box-sizing:border-box; }
+html{ scroll-behavior:smooth; }
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink-text);
+  font-family:var(--font-body);
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{ font-family:var(--font-display); margin:0; }
+a{ color:inherit; }
+button{ font-family:var(--font-body); cursor:pointer; }
+::selection{ background:var(--gold-soft); }
+.hidden{ display:none !important; }
+
+@media (prefers-reduced-motion: reduce){
+  *{ animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important; scroll-behavior:auto !important; }
+}
+
+/* ============================================================
+   GATE (tela de acesso)
+   ============================================================ */
+.gate{
+  position:fixed; inset:0; z-index:1000;
+  background:
+    radial-gradient(ellipse at 20% 0%, rgba(199,154,43,0.16), transparent 55%),
+    linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+  display:flex; align-items:center; justify-content:center; padding:24px;
+}
+.gate-card{
+  width:100%; max-width:400px; background:var(--paper); border-radius:14px; padding:34px 30px;
+  box-shadow:0 30px 60px rgba(0,0,0,0.35); position:relative;
+}
+.gate-card::before{
+  content:"PRESS"; position:absolute; top:-11px; left:30px; background:var(--gold);
+  color:var(--ink); font-family:var(--font-mono); font-size:10px; font-weight:700; letter-spacing:.14em;
+  padding:3px 10px; border-radius:3px; transform:rotate(-2deg);
+}
+.gate-kicker{ font-family:var(--font-mono); font-size:11px; letter-spacing:.12em; text-transform:uppercase; color:var(--slate); margin:0 0 8px; }
+.gate-card h1{ font-size:26px; font-weight:600; margin-bottom:6px; }
+.gate-card p.desc{ font-size:13px; color:var(--ink-text-soft); margin-bottom:22px; line-height:1.5; }
+.gate-field label{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-text-soft); font-weight:600; display:block; margin-bottom:6px; }
+.gate-field input{
+  width:100%; font-family:var(--font-mono); font-size:14px; padding:11px 12px; border-radius:8px;
+  border:1.5px solid var(--rule-paper); background:#fff; color:var(--ink-text);
+}
+.gate-field input:focus{ outline:none; border-color:var(--gold); }
+.gate-submit{
+  width:100%; margin-top:16px; background:var(--ink); color:var(--paper); border:none; border-radius:8px;
+  padding:12px; font-size:13px; font-weight:700; letter-spacing:.03em;
+}
+.gate-submit:hover{ background:var(--ink-2); }
+.gate-error{ color:var(--red); font-size:12px; margin-top:10px; display:none; }
+.gate-error.show{ display:block; }
+.gate-card.shake{ animation:shake .4s; }
+@keyframes shake{ 10%,90%{transform:translateX(-1px);} 20%,80%{transform:translateX(2px);} 30%,50%,70%{transform:translateX(-4px);} 40%,60%{transform:translateX(4px);} }
+.gate-note{ font-size:11px; color:var(--slate); margin-top:18px; line-height:1.5; }
+
+/* ============================================================
+   MASTHEAD
+   ============================================================ */
+.masthead{
+  background:
+    radial-gradient(ellipse at 15% -10%, rgba(199,154,43,0.14), transparent 55%),
+    linear-gradient(180deg, var(--ink) 0%, var(--ink-2) 100%);
+  color:var(--paper);
+  padding:28px 32px 0;
+  position:relative;
+}
+.masthead-top{
+  display:flex; align-items:flex-start; justify-content:space-between;
+  max-width:1320px; margin:0 auto;
+  border-bottom:1px solid var(--rule);
+  padding-bottom:18px;
+  gap:20px; flex-wrap:wrap;
+}
+.masthead-kicker{
+  font-family:var(--font-mono);
+  font-size:11px; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--gold-soft); margin:0 0 10px;
+  display:flex; gap:10px; align-items:center;
+}
+.masthead-kicker .dot{ width:5px;height:5px;border-radius:50%; background:var(--gold-soft); display:inline-block; }
+.masthead h1{
+  font-size:clamp(28px, 3.8vw, 46px);
+  font-weight:600;
+  line-height:1.02;
+  letter-spacing:-0.01em;
+}
+.masthead .subtitle{
+  font-family:var(--font-display); font-style:italic; font-weight:500;
+  font-size:clamp(14px,1.5vw,18px);
+  color:#C9D3E0; margin-top:8px;
+}
+.masthead-meta{
+  font-family:var(--font-mono); font-size:12px; color:#AEBBCC;
+  display:flex; flex-direction:column; gap:7px; align-items:flex-end;
+  text-align:right; min-width:220px; padding-top:6px;
+}
+.masthead-meta .status{
+  display:inline-flex; align-items:center; gap:6px;
+  font-size:11px; letter-spacing:.05em; text-transform:uppercase;
+  padding:4px 10px; border-radius:20px; border:1px solid var(--rule);
+}
+.status-dot{ width:7px;height:7px;border-radius:50%; background:var(--slate); }
+.status.live .status-dot{ background:#4CAF87; box-shadow:0 0 0 3px rgba(76,175,135,0.25); }
+.status.offline .status-dot{ background:var(--amber); box-shadow:0 0 0 3px rgba(185,121,26,0.25); }
+.masthead-meta button{
+  background:transparent; border:1px solid var(--rule); color:#D8E0EA;
+  font-family:var(--font-mono); font-size:11px; padding:6px 12px; border-radius:20px;
+  letter-spacing:.04em; transition:.15s;
+}
+.masthead-meta button:hover{ border-color:var(--gold-soft); color:var(--gold-soft); }
+
+.masthead-strip{
+  max-width:1320px; margin:0 auto;
+  display:flex; gap:28px; flex-wrap:wrap;
+  padding:14px 0 20px; font-family:var(--font-mono); font-size:12px; color:#9FADBF;
+}
+.masthead-strip b{ color:var(--gold-soft); font-weight:600; }
+
+/* torn paper divider */
+.torn{
+  height:22px; width:100%; display:block;
+  background:var(--ink-2);
+  -webkit-mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'><path d='M0 6 L5 10 L10 4 L15 12 L20 5 L25 11 L30 3 L35 9 L40 6 L40 22 L0 22 Z' fill='black'/></svg>");
+  mask-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='22' viewBox='0 0 40 22'><path d='M0 6 L5 10 L10 4 L15 12 L20 5 L25 11 L30 3 L35 9 L40 6 L40 22 L0 22 Z' fill='black'/></svg>");
+  -webkit-mask-repeat:repeat-x; mask-repeat:repeat-x;
+  -webkit-mask-size: 40px 22px; mask-size:40px 22px;
+}
+
+/* ============================================================
+   TAB BAR (menu das duas seções)
+   ============================================================ */
+.tabbar-wrap{ background:var(--ink-2); border-bottom:1px solid var(--rule); }
+.tabbar{
+  max-width:1320px; margin:0 auto; padding:0 32px; display:flex; gap:4px;
+}
+.tab-btn{
+  background:transparent; border:none; color:#9FADBF; font-family:var(--font-mono);
+  font-size:12.5px; letter-spacing:.04em; text-transform:uppercase; padding:14px 18px;
+  border-bottom:2.5px solid transparent; display:flex; align-items:center; gap:8px;
+}
+.tab-btn .n{
+  font-family:var(--font-body); font-weight:700; background:var(--ink-3); color:#C9D3E0;
+  font-size:10.5px; padding:1px 7px; border-radius:10px;
+}
+.tab-btn:hover{ color:var(--paper); }
+.tab-btn.active{ color:var(--gold-soft); border-bottom-color:var(--gold); }
+.tab-btn.active .n{ background:var(--gold); color:var(--ink); }
+
+/* ticker */
+.ticker-wrap{
+  background:var(--ink-3); border-bottom:1px solid var(--rule);
+  overflow:hidden; white-space:nowrap;
+}
+.ticker{
+  display:inline-block; padding:9px 0;
+  font-family:var(--font-mono); font-size:12px; color:#C9D3E0;
+  animation:ticker 60s linear infinite;
+}
+.ticker span{ padding:0 26px; border-right:1px solid var(--rule); }
+.ticker span b{ color:var(--gold-soft); }
+@keyframes ticker{ from{ transform:translateX(0); } to{ transform:translateX(-50%); } }
+
+/* ============================================================
+   KPI STRIP
+   ============================================================ */
+.kpi-section{ background:var(--paper); padding:26px 32px 6px; }
+.kpi-grid{
+  max-width:1320px; margin:0 auto;
+  display:grid; grid-template-columns:repeat(6,1fr); gap:1px;
+  background:var(--rule-paper); border:1px solid var(--rule-paper);
+}
+.kpi{
+  background:var(--paper); padding:18px 16px;
+  display:flex; flex-direction:column; gap:6px;
+}
+.kpi .num{ font-family:var(--font-display); font-size:clamp(22px,2.4vw,32px); font-weight:600; line-height:1; }
+.kpi .label{ font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-text-soft); font-weight:600;}
+.kpi .sub{ font-family:var(--font-mono); font-size:11px; color:var(--ink-text-soft); }
+.kpi.accent-teal .num{ color:var(--teal); }
+.kpi.accent-amber .num{ color:var(--amber); }
+.kpi.accent-red .num{ color:var(--red); }
+.kpi.accent-gold .num{ color:#96731E; }
+
+@media (max-width:980px){ .kpi-grid{ grid-template-columns:repeat(3,1fr); } }
+@media (max-width:600px){ .kpi-grid{ grid-template-columns:repeat(2,1fr); } }
+
+/* ============================================================
+   FILTER BAR
+   ============================================================ */
+.filters-wrap{ position:sticky; top:0; z-index:40; background:var(--paper); border-bottom:1px solid var(--rule-paper); }
+.filters{
+  max-width:1320px; margin:0 auto; padding:14px 32px;
+  display:flex; flex-wrap:wrap; gap:10px; align-items:center;
+}
+.filters .field{ display:flex; flex-direction:column; gap:4px; }
+.filters label{ font-size:10px; text-transform:uppercase; letter-spacing:.07em; color:var(--ink-text-soft); font-weight:600; }
+.filters select, .filters input[type=text], .filters input[type=date]{
+  font-family:var(--font-body); font-size:13px; padding:7px 10px;
+  border:1px solid var(--rule-paper); border-radius:6px; background:#fff; color:var(--ink-text);
+  min-width:140px;
+}
+.filters input[type=text]{ min-width:200px; }
+.filters .search-field{ flex:1; min-width:220px; }
+.filters .search-field input{ width:100%; }
+.filters button.reset{
+  background:transparent; border:1px solid var(--rule-paper); border-radius:20px;
+  padding:8px 14px; font-size:12px; color:var(--ink-text-soft); align-self:flex-end;
+}
+.filters button.reset:hover{ border-color:var(--red); color:var(--red); }
+.result-count{ font-family:var(--font-mono); font-size:12px; color:var(--ink-text-soft); align-self:flex-end; margin-left:auto; padding-bottom:8px; }
+
+/* ============================================================
+   SECTIONS / CHARTS
+   ============================================================ */
+.section{ max-width:1320px; margin:0 auto; padding:34px 32px; }
+.section-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:16px; flex-wrap:wrap; gap:10px; }
+.section-head h2{ font-size:22px; font-weight:600; }
+.section-head .eyebrow{
+  font-family:var(--font-mono); font-size:11px; letter-spacing:.1em; text-transform:uppercase; color:var(--slate);
+}
+.charts-grid{ display:grid; grid-template-columns:1.1fr 1fr 1fr; gap:16px; }
+.charts-grid .wide{ grid-column:1/-1; }
+.chart-card{
+  background:#fff; border:1px solid var(--rule-paper); border-radius:10px; padding:18px;
+}
+.chart-card h3{ font-size:14px; font-weight:700; font-family:var(--font-body); margin-bottom:4px; }
+.chart-card .cap{ font-size:11px; color:var(--ink-text-soft); margin-bottom:12px; font-family:var(--font-mono); }
+.chart-canvas-wrap{ position:relative; height:260px; }
+.chart-card.tall .chart-canvas-wrap{ height:320px; }
+.chart-card canvas{ max-height:100%; }
+.chart-fallback{
+  height:100%; display:flex; align-items:center; justify-content:center; text-align:center;
+  font-size:12px; color:var(--ink-text-soft); padding:14px; background:var(--paper-2); border-radius:8px;
+}
+@media (max-width:980px){ .charts-grid{ grid-template-columns:1fr; } }
+
+/* ============================================================
+   FEED / CLIPPINGS
+   ============================================================ */
+.feed-controls{ display:flex; gap:8px; align-items:center; }
+.view-toggle{ display:flex; border:1px solid var(--rule-paper); border-radius:20px; overflow:hidden; }
+.view-toggle button{
+  background:#fff; border:none; padding:7px 16px; font-size:12px; color:var(--ink-text-soft); font-weight:600;
+}
+.view-toggle button.active{ background:var(--ink); color:var(--paper); }
+.export-btn{
+  background:var(--paper); border:1px solid var(--rule-paper); border-radius:20px; padding:7px 16px; font-size:12px; font-weight:600; color:var(--ink-text);
+}
+.export-btn:hover{ border-color:var(--gold); color:#8B6A1E; }
+
+.cards-grid{ display:grid; grid-template-columns:repeat(auto-fill,minmax(320px,1fr)); gap:18px; margin-top:18px; }
+
+.clip{
+  background:#fff;
+  border:1px solid var(--rule-paper);
+  border-top:none;
+  padding:18px 18px 16px;
+  position:relative;
+  box-shadow:0 1px 0 rgba(0,0,0,0.02);
+}
+.clip::before{
+  content:"";
+  position:absolute; top:-1px; left:0; right:0; height:9px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='9' viewBox='0 0 24 9'><path d='M0 9 L3 1 L6 8 L9 2 L12 9 L15 1 L18 8 L21 2 L24 9 Z' fill='white' stroke='%23C9BC98' stroke-width='1'/></svg>");
+  background-repeat:repeat-x; background-size:24px 9px;
+}
+.clip-top{ display:flex; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.clip-date{ font-family:var(--font-mono); font-size:11px; color:var(--slate); text-align:right; }
+.clip-veiculo{ font-family:var(--font-display); font-weight:600; font-size:15px; }
+.clip-jornalista{ font-size:12px; color:var(--ink-text-soft); margin-top:1px; }
+.clip-eyebrow{ font-family:var(--font-mono); font-size:10px; text-transform:uppercase; letter-spacing:.05em; color:var(--slate); margin-bottom:2px; }
+.clip-materia{ font-size:12px; margin:8px 0 10px; color:var(--blue); text-decoration:none; display:inline-block; }
+.clip-materia.notlink{ color:var(--ink-text-soft); font-style:italic; }
+.clip-analise{ font-size:12.5px; line-height:1.5; color:var(--ink-text); margin-bottom:10px; }
+.clip-badges{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:8px; }
+.stamp{
+  display:inline-block; font-family:var(--font-mono); font-size:10px; font-weight:600;
+  letter-spacing:.05em; text-transform:uppercase; padding:4px 9px; border-radius:3px;
+  border:1.5px solid currentColor; transform:rotate(-2deg);
+}
+.stamp.teal{ color:var(--teal); background:var(--teal-soft); }
+.stamp.amber{ color:var(--amber); background:var(--amber-soft); }
+.stamp.red{ color:var(--red); background:var(--red-soft); }
+.stamp.blue{ color:var(--blue); background:var(--blue-soft); }
+.stamp.gold{ color:#8B6A1E; background:#F3E7C8; }
+.stamp.grey{ color:var(--slate); background:#EEF0F2; }
+.clip-detail{ font-size:12px; color:var(--ink-text-soft); border-top:1px dashed var(--rule-paper); padding-top:8px; margin-top:6px; }
+.clip-detail div{ margin-bottom:3px; }
+.clip-detail b{ color:var(--ink-text); }
+
+/* table view */
+.table-wrap{ margin-top:18px; overflow-x:auto; border:1px solid var(--rule-paper); border-radius:10px; background:#fff; }
+table.data-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+table.data-table th{
+  text-align:left; font-family:var(--font-mono); font-size:10.5px; text-transform:uppercase; letter-spacing:.05em;
+  color:var(--slate); background:var(--paper-2); padding:10px 12px; border-bottom:1px solid var(--rule-paper); white-space:nowrap;
+  position:sticky; top:0;
+}
+table.data-table td{ padding:10px 12px; border-bottom:1px solid #EFEAE0; vertical-align:top; }
+table.data-table tr:hover td{ background:#FBF8F0; }
+.td-materia{ max-width:260px; }
+.td-analise{ max-width:320px; color:var(--ink-text-soft); }
+
+.empty-state{ padding:50px 20px; text-align:center; color:var(--ink-text-soft); }
+.empty-state h3{ font-family:var(--font-display); font-size:20px; margin-bottom:6px; color:var(--ink-text); }
+
+/* ============================================================
+   FOOTER
+   ============================================================ */
+footer{
+  background:var(--ink); color:#9FADBF; padding:26px 32px; margin-top:20px;
+  font-family:var(--font-mono); font-size:11px;
+}
+footer .foot-inner{ max-width:1320px; margin:0 auto; display:flex; justify-content:space-between; flex-wrap:wrap; gap:10px; }
+footer a{ color:var(--gold-soft); text-decoration:none; }
+
+/* offline banner */
+.banner{
+  max-width:1320px; margin:14px auto 0; padding:10px 16px; border-radius:8px;
+  font-size:12.5px; display:flex; align-items:center; gap:10px; justify-content:space-between;
+}
+.banner.offline{ background:var(--amber-soft); color:#6E4A0E; border:1px solid #E0C179; }
+.banner button{ background:transparent; border:1px solid currentColor; border-radius:16px; padding:4px 10px; font-size:11px; color:inherit; }
+</style>
+</head>
+<body>
+
+<!-- ================= GATE (SENHA) ================= -->
+<div class="gate" id="gate">
+  <div class="gate-card" id="gateCard">
+    <p class="gate-kicker">Acesso restrito</p>
+    <h1>Painel de Imprensa &amp; Relacionamento</h1>
+    <p class="desc">Betano × Grupo In Press — conteúdo de uso interno do time e do cliente. Informe a senha de acesso para continuar.</p>
+    <form id="gateForm">
+      <div class="gate-field">
+        <label for="gatePassword">Senha</label>
+        <input type="password" id="gatePassword" autocomplete="current-password" placeholder="••••••••••••">
+      </div>
+      <button class="gate-submit" type="submit">Entrar no painel →</button>
+      <p class="gate-error" id="gateError">Senha incorreta. Tente novamente.</p>
+    </form>
+    <p class="gate-note">Este é um bloqueio simples para manter visitantes casuais fora do painel — não substitui um controle de acesso real. Não compartilhe a senha fora do time Betano/In Press.</p>
+  </div>
+</div>
+
+<!-- ================= APP ================= -->
+<div id="app" class="hidden">
+
+<header class="masthead">
+  <div class="masthead-top">
+    <div>
+      <p class="masthead-kicker"><span class="dot"></span> ASSESSORIA DE IMPRENSA &nbsp;·&nbsp; EDIÇÃO CONTÍNUA</p>
+      <h1>Imprensa &amp; Relacionamento</h1>
+      <p class="subtitle">Betano &amp; Grupo In Press — mapa vivo de contatos com a imprensa e ações em jogos e eventos</p>
+    </div>
+    <div class="masthead-meta">
+      <button id="lockBtn" type="button" title="Sair e bloquear o painel">🔒 Bloquear painel</button>
+    </div>
+  </div>
+  <div class="masthead-strip">
+    <span><b>Cliente</b> Betano</span>
+    <span><b>Agência</b> Grupo In Press</span>
+    <span><b>Cobertura</b> Regulação de bets · relacionamento em jogos e eventos</span>
+    <span><b>Fonte</b> Planilha de acompanhamento do time</span>
+  </div>
+  <span class="torn"></span>
+</header>
+
+<div class="tabbar-wrap">
+  <nav class="tabbar" role="tablist">
+    <button class="tab-btn active" id="tabBtnAcoes" type="button" role="tab" aria-selected="true">📰 Relações com a Imprensa <span class="n" id="tabCountAcoes">–</span></button>
+    <button class="tab-btn" id="tabBtnJogos" type="button" role="tab" aria-selected="false">🏆 Jogos &amp; Eventos <span class="n" id="tabCountJogos">–</span></button>
+  </nav>
+</div>
+
+<!-- ======================================================================
+     ABA 1 — RELAÇÕES COM A IMPRENSA (Ações)
+     ====================================================================== -->
+<div id="viewAcoes">
+
+  <div class="ticker-wrap">
+    <div class="ticker" id="ticker">Carregando ações recentes…</div>
+  </div>
+
+  <div id="offlineBanner"></div>
+
+  <section class="kpi-section">
+    <div class="kpi-grid" id="kpiGrid"></div>
+  </section>
+
+  <div class="filters-wrap">
+    <div class="filters">
+      <div class="field search-field">
+        <label for="fSearch">Buscar</label>
+        <input type="text" id="fSearch" placeholder="Jornalista, veículo, pauta, análise…">
+      </div>
+      <div class="field">
+        <label for="fVeiculo">Veículo</label>
+        <select id="fVeiculo"><option value="">Todos</option></select>
+      </div>
+      <div class="field">
+        <label for="fAcao">Ação</label>
+        <select id="fAcao"><option value="">Todas</option></select>
+      </div>
+      <div class="field">
+        <label for="fRetorno">Retorno</label>
+        <select id="fRetorno"><option value="">Todos</option></select>
+      </div>
+      <div class="field">
+        <label for="fDe">De</label>
+        <input type="date" id="fDe">
+      </div>
+      <div class="field">
+        <label for="fAte">Até</label>
+        <input type="date" id="fAte">
+      </div>
+      <button class="reset" id="resetBtn" type="button">Limpar filtros</button>
+      <span class="result-count" id="resultCount"></span>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Panorama</p>
+        <h2>Como está a operação de relacionamento</h2>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card wide">
+        <h3>Funil: ação do time → retorno do jornalista</h3>
+        <p class="cap">Cada barra é uma etapa da jornada de relacionamento, da decisão de contato ao retorno recebido</p>
+        <div class="chart-canvas-wrap"><canvas id="chartFunil"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Distribuição por ação</h3>
+        <p class="cap">O que o time decidiu fazer em cada pauta</p>
+        <div class="chart-canvas-wrap"><canvas id="chartAcao"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Distribuição por retorno</h3>
+        <p class="cap">O que voltou do jornalista</p>
+        <div class="chart-canvas-wrap"><canvas id="chartRetorno"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Linha do tempo</h3>
+        <p class="cap">Ações registradas por mês</p>
+        <div class="chart-canvas-wrap"><canvas id="chartTempo"></canvas></div>
+      </div>
+      <div class="chart-card tall">
+        <h3>Veículos mais acionados</h3>
+        <p class="cap">Top 10 por volume de pautas/contatos</p>
+        <div class="chart-canvas-wrap"><canvas id="chartVeiculos"></canvas></div>
+      </div>
+      <div class="chart-card tall">
+        <h3>Jornalistas mais acionados</h3>
+        <p class="cap">Top 10 por número de registros</p>
+        <div class="chart-canvas-wrap"><canvas id="chartJornalistas"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="feedSection">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Registro</p>
+        <h2>Clipping de ações</h2>
+      </div>
+      <div class="feed-controls">
+        <div class="view-toggle">
+          <button id="viewCardsBtn" class="active" type="button">Cartões</button>
+          <button id="viewTableBtn" type="button">Tabela</button>
+        </div>
+        <button class="export-btn" id="exportBtn" type="button">⇩ Exportar CSV filtrado</button>
+      </div>
+    </div>
+
+    <div id="cardsView" class="cards-grid"></div>
+
+    <div id="tableView" class="table-wrap hidden">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Data</th><th>Veículo</th><th>Jornalista</th><th>Matéria/Oportunidade</th>
+            <th>Ação</th><th>Retorno</th><th>Contato</th><th>Análise</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div id="emptyState" class="empty-state hidden">
+      <h3>Nenhum registro encontrado</h3>
+      <p>Ajuste os filtros acima para ver outras ações.</p>
+    </div>
+  </section>
+
+</div>
+<!-- fim viewAcoes -->
+
+<!-- ======================================================================
+     ABA 2 — JOGOS & EVENTOS
+     ====================================================================== -->
+<div id="viewJogos" class="hidden">
+
+  <div class="ticker-wrap">
+    <div class="ticker" id="jTicker">Carregando ações recentes…</div>
+  </div>
+
+  <div id="jOfflineBanner"></div>
+
+  <section class="kpi-section">
+    <div class="kpi-grid" id="jKpiGrid"></div>
+  </section>
+
+  <div class="filters-wrap">
+    <div class="filters">
+      <div class="field search-field">
+        <label for="jSearch">Buscar</label>
+        <input type="text" id="jSearch" placeholder="Jornalista, veículo, evento, observações…">
+      </div>
+      <div class="field">
+        <label for="jEditoria">Editoria</label>
+        <select id="jEditoria"><option value="">Todas</option></select>
+      </div>
+      <div class="field">
+        <label for="jCampanha">Campanha</label>
+        <select id="jCampanha"><option value="">Todas</option></select>
+      </div>
+      <div class="field">
+        <label for="jMes">Mês</label>
+        <select id="jMes"><option value="">Todos</option></select>
+      </div>
+      <div class="field">
+        <label for="jExperiencia">Experiência</label>
+        <select id="jExperiencia"><option value="">Todas</option></select>
+      </div>
+      <button class="reset" id="jResetBtn" type="button">Limpar filtros</button>
+      <span class="result-count" id="jResultCount"></span>
+    </div>
+  </div>
+
+  <section class="section">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Panorama</p>
+        <h2>Como está o relacionamento em jogos e eventos</h2>
+      </div>
+    </div>
+    <div class="charts-grid">
+      <div class="chart-card wide">
+        <h3>Linha do tempo por mês</h3>
+        <p class="cap">Volume de participações/convites registrados, em ordem cronológica</p>
+        <div class="chart-canvas-wrap"><canvas id="chartJTempo"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Distribuição por experiência</h3>
+        <p class="cap">Como foi avaliada a passagem do jornalista pelo evento</p>
+        <div class="chart-canvas-wrap"><canvas id="chartJExperiencia"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Ranking de editorias</h3>
+        <p class="cap">Quais editorias mais participam das ações</p>
+        <div class="chart-canvas-wrap"><canvas id="chartJEditoria"></canvas></div>
+      </div>
+      <div class="chart-card">
+        <h3>Participação por campanha</h3>
+        <p class="cap">Volume de registros por campanha do mês</p>
+        <div class="chart-canvas-wrap"><canvas id="chartJCampanha"></canvas></div>
+      </div>
+      <div class="chart-card tall">
+        <h3>Eventos com mais presença</h3>
+        <p class="cap">Top 10 eventos por número de jornalistas envolvidos</p>
+        <div class="chart-canvas-wrap"><canvas id="chartJEventos"></canvas></div>
+      </div>
+      <div class="chart-card tall">
+        <h3>Veículos mais presentes</h3>
+        <p class="cap">Top 10 por número de registros</p>
+        <div class="chart-canvas-wrap"><canvas id="chartJVeiculos"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" id="jFeedSection">
+    <div class="section-head">
+      <div>
+        <p class="eyebrow">Registro</p>
+        <h2>Fichas de relacionamento</h2>
+      </div>
+      <div class="feed-controls">
+        <div class="view-toggle">
+          <button id="jViewCardsBtn" class="active" type="button">Cartões</button>
+          <button id="jViewTableBtn" type="button">Tabela</button>
+        </div>
+        <button class="export-btn" id="jExportBtn" type="button">⇩ Exportar CSV filtrado</button>
+      </div>
+    </div>
+
+    <div id="jCardsView" class="cards-grid"></div>
+
+    <div id="jTableView" class="table-wrap hidden">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Mês/Ano</th><th>Editoria</th><th>Veículo</th><th>Jornalista</th>
+            <th>Evento</th><th>Campanha</th><th>Experiência</th><th>Detalhamento</th>
+          </tr>
+        </thead>
+        <tbody id="jTableBody"></tbody>
+      </table>
+    </div>
+
+    <div id="jEmptyState" class="empty-state hidden">
+      <h3>Nenhum registro encontrado</h3>
+      <p>Ajuste os filtros acima para ver outros registros.</p>
+    </div>
+  </section>
+
+</div>
+<!-- fim viewJogos -->
+
+<footer>
+  <div class="foot-inner">
+    <span>Painel de imprensa &amp; relacionamento · Betano × Grupo In Press</span>
+    <span>Fonte dos dados: <a id="sheetLink" href="#" target="_blank" rel="noopener">planilha do time</a> · atualização automática ao abrir a página</span>
+  </div>
+</footer>
+
+</div>
+<!-- fim #app -->
+
+<script>
+/* ============================================================
+   CONFIGURAÇÃO
+   — edite aqui se a planilha de origem mudar de endereço —
+   ============================================================ */
+const SHEET_ID = "1ksMhhNPTZNo4kuCOljU85P-PfvW2kUUz0KZabF1cmTo";
+const CONFIG = {
+  // endpoint "gviz" do Google Sheets: lê a planilha em CSV direto pelo nome da
+  // aba, sem precisar publicar na web — só precisa do compartilhamento
+  // "Qualquer pessoa com o link" habilitado (Visualizador já é suficiente).
+  ACOES_CSV_URL: "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent("Ações"),
+  JOGOS_CSV_URL: "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/gviz/tq?tqx=out:csv&sheet=" + encodeURIComponent("Jogos e eventos"),
+  SHEET_VIEW_URL: "https://docs.google.com/spreadsheets/d/" + SHEET_ID + "/edit"
+};
+document.getElementById('sheetLink').href = CONFIG.SHEET_VIEW_URL;
+
+/* ============================================================
+   SENHA DE ACESSO
+   Bloqueio simples no navegador — não é segurança real (qualquer
+   pessoa com acesso ao código-fonte da página consegue ver a senha
+   e os dados). Serve só para manter visitantes casuais fora.
+   ============================================================ */
+const GATE_PASSWORD = "InPressBetano2026!";
+const GATE_KEY = "ipp_betano_dashboard_unlocked";
+
+function unlockApp(){
+  document.getElementById('gate').classList.add('hidden');
+  document.getElementById('app').classList.remove('hidden');
+  if(!window.__DASH_STARTED__){
+    window.__DASH_STARTED__ = true;
+    initAcoes();
+    initJogos();
+  }
+}
+document.getElementById('gateForm').addEventListener('submit', function(e){
+  e.preventDefault();
+  const val = document.getElementById('gatePassword').value;
+  if(val === GATE_PASSWORD){
+    try{ localStorage.setItem(GATE_KEY,'1'); }catch(e){}
+    unlockApp();
+  } else {
+    const card = document.getElementById('gateCard');
+    document.getElementById('gateError').classList.add('show');
+    card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
+  }
+});
+document.getElementById('lockBtn').addEventListener('click', function(){
+  try{ localStorage.removeItem(GATE_KEY); }catch(e){}
+  document.getElementById('app').classList.add('hidden');
+  document.getElementById('gate').classList.remove('hidden');
+  document.getElementById('gatePassword').value = '';
+});
+(function checkGateOnLoad(){
+  try{
+    if(localStorage.getItem(GATE_KEY) === '1') unlockApp();
+  }catch(e){}
+})();
+
+/* ============================================================
+   TABS
+   ============================================================ */
+document.getElementById('tabBtnAcoes').addEventListener('click', function(){ showTab('acoes'); });
+document.getElementById('tabBtnJogos').addEventListener('click', function(){ showTab('jogos'); });
+function showTab(tab){
+  document.getElementById('tabBtnAcoes').classList.toggle('active', tab==='acoes');
+  document.getElementById('tabBtnJogos').classList.toggle('active', tab==='jogos');
+  document.getElementById('tabBtnAcoes').setAttribute('aria-selected', tab==='acoes');
+  document.getElementById('tabBtnJogos').setAttribute('aria-selected', tab==='jogos');
+  document.getElementById('viewAcoes').classList.toggle('hidden', tab!=='acoes');
+  document.getElementById('viewJogos').classList.toggle('hidden', tab!=='jogos');
+}
+
+/* ============================================================
+   DADOS EMBUTIDOS (fallback offline)
+   Exportados da última planilha compartilhada com o Claude. Se a
+   busca ao vivo falhar, o painel usa estes registros para nunca
+   ficar vazio.
+   ============================================================ */
+const SEED_DATA_ACOES = [{"data": "2024-09-26", "materia": "O que o governo planeja para reduzir o endividamento com 'bets' e jogos on-line? Confira", "veiculo": "O Globo", "jornalista": "Manoel Ventura", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem sobre as medidas estudadas pelo governo para enfrentar o endividamento associado às apostas, abordando iniciativas regulatórias, educação financeira e mecanismos de proteção ao consumidor.", "retorno": "Contato feito", "retorno_detalhe": "Encontro de relacionamento realizado", "contato": ""}, {"data": "2026-06-03", "materia": "Setor financeiro se movimenta para atender ‘bets’ | Finanças | Valor Econômico", "veiculo": "Valor Econômico", "jornalista": "Álvaro Campos", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem analisa como o crescimento das apostas passou a competir com outras formas de alocação de recursos, especialmente investimentos financeiros, discutindo os impactos desse comportamento sobre o mercado de capitais e o consumo das famílias.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo enviado sobre regulamentação - mais pertinente à pauta", "contato": "(11)99683-8151"}, {"data": "2026-03-08", "materia": "Bets: comunicações de operações suspeitas envolvendo casas de apostas disparam em 2025", "veiculo": "O Globo", "jornalista": "Thaís Barcellos", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem mostra como a regulamentação aumentou o número de comunicações de operações suspeitas ao Coaf e analisa os desafios da fiscalização financeira diante da permanência de um mercado ilegal expressivo.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo enviado sobre regulamentação - mais pertinente à pauta", "contato": "(21)97122-8681"}, {"data": "2026-04-24", "materia": "Governo bloqueia 27 plataformas por apostas em mercado de previsões | CNN Brasil", "veiculo": "CNN", "jornalista": "Elis Barreto", "acao": "Contato feito", "acao_detalhe": "", "analise": "O Ministério da Fazenda bloqueou dezenas de plataformas (como Kalshi e Polymarket) que disfarçavam apostas sobre eventos reais (como eleições e clima) de \"produtos financeiros\". A medida visa frear o superendividamento antes que um novo mercado sem regulação se consolide.", "retorno": "Contato feito", "retorno_detalhe": "Envio de estudo sobre regulamentação - jornalista agradeceu e mostrou interesse em receber novos conteúdos - adicionou no WhatsApp", "contato": "elis.barreto@cnnbrasil.com.br"}, {"data": "2026-04-26", "materia": "Cresce tendência ao vício entre brasileiros que apostam em bets, mostra pesquisa - ISTOÉ DINHEIRO", "veiculo": "Istoé Dinheiro", "jornalista": "Tatiana Schnoor", "acao": "Contato feito", "acao_detalhe": "", "analise": "A pesquisa \"Raio X do Investidor\" mostra uma migração alarmante de apostadores casuais para o perfil de \"jogadores problemáticos\" ou de risco moderado. A compulsão afeta sobretudo jovens da classe C, destruindo sua capacidade de poupança.", "retorno": "Contato feito", "retorno_detalhe": "Disse que não tem interesse em aproximação/conversa", "contato": ""}, {"data": "2026-05-30", "materia": "Projeto de lei Brasil contra as Bets une bolsonaristas e lulistas no Congresso - Capital S/A", "veiculo": "Correio Braziliense", "jornalista": "Samanta Sallum", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem centrada no debate legislativo e político. Cabe envio do estudo sobre regulação, que contribui para a discussão sobre os efeitos do modelo regulatório e combate ao mercado ilegal.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-05-31", "materia": "MPF abre inquérito para investigar atuação do governo Lula na fiscalização das bets | VEJA", "veiculo": "Veja", "jornalista": "Robson Bonin", "acao": "Contato feito", "acao_detalhe": "", "analise": "Pauta sobre fiscalização, atuação do governo e ambiente regulatório. Excelente aderência ao estudo sobre mercado ilegal e regulação, especialmente sobre desafios da fiscalização e fortalecimento do mercado regulado.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-05-31", "materia": "Vício em bets e jogos online faz explodir afastamentos no trabalho", "veiculo": "O Globo", "jornalista": "Lauro Jardim", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria baseada em impactos do vício na saúde e no ambiente de trabalho. Tema sensível, com foco em consequências sociais. Não enviar estudos; não é uma pauta adequada para contraponto institucional.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-11", "materia": "‘Bets são um assunto de saúde, não é da área econômica’, diz Arminio Fraga - Estadão", "veiculo": "Estadão", "jornalista": "Fabiana Cambricoli", "acao": "Contato feito", "acao_detalhe": "", "analise": "Discussão centrada na saúde pública e ludopatia. Tema sensível. Evitar envio de estudos como contraponto; apenas relacionamento institucional.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-11", "materia": "Lindbergh defende proibir \"jogo do tigrinho\" no Brasil", "veiculo": "Poder 360", "jornalista": "Juliana Alves", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem sobre proposta legislativa e diferenciação entre modalidades de jogos. Cabe envio do estudo sobre mercado ilegal e regulação, contribuindo para o debate regulatório e de fiscalização.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo sobre regulação enviado", "contato": "juliana.alves@poder360.com.br"}, {"data": "2026-06-11", "materia": "Sigilo das bets gera nova crise de credibilidade para governo Lula", "veiculo": "Gazeta do Povo", "jornalista": "Rose Amantéa", "acao": "Contato feito", "acao_detalhe": "", "analise": "Matéria sobre transparência, autorizações e ambiente regulatório. Excelente aderência ao estudo sobre mercado ilegal e regulação, especialmente no eixo de governança e segurança jurídica.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo sobre regulação enviado", "contato": "roselainea@gazetadopovo.com.br"}, {"data": "2026-06-14", "materia": "Dinheiro que vai para a Bet não vai para o supermercado, diz gestor da Ibiuna", "veiculo": "Infomoney", "jornalista": "Osni Alves", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem sobre impacto econômico das apostas no consumo das famílias. Melhor material é o estudo da LCA, por trazer dados sobre comprometimento de renda, crédito e inadimplência.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-14", "materia": "Apostas online atraem 35% dos paulistanos em busca de renda extra", "veiculo": "Folha de S. Paulo", "jornalista": "Sem autor", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria sobre comportamento do consumidor e motivação econômica para apostar. O estudo da LCA é o mais aderente, pois contextualiza endividamento, inadimplência e a ausência de evidências de relação causal direta entre bets e aumento da inadimplência.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-14", "materia": "https://www.migalhas.com.br/quentes/457967/dino-critica-bets-e-big-techs-liberdade-nao-pode-proteger-vicios", "veiculo": "Migalhas", "jornalista": "Sem autor", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Reportagem sobre declarações do ministro e debate político. Enfoque predominantemente opinativo/jurídico. Se houver contato, enviar estudo sobre regulação, sem tom de contraponto.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-15", "materia": "Datafolha: visão de bets e jogos online são vício oscila para cima, diz Datafolha", "veiculo": "Folha de S. Paulo", "jornalista": "Joana Cunha", "acao": "Contato feito", "acao_detalhe": "", "analise": "Pesquisa de percepção sobre bets e jogos online como vício. Tema sensível, mas com base em dados. Cabe abordagem institucional leve, com eventual envio do estudo LCA se o foco for endividamento/percepção econômica.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-15", "materia": "Vício em bets: auditora viraliza ao contar história do irmão que morreu após adquirir dívida milionária com apostas online", "veiculo": "G1", "jornalista": "Malu Vieira", "acao": "Contato feito", "acao_detalhe": "", "analise": "Relato familiar sensível ligado à ludopatia. Não enviar estudo. Apenas contato institucional, com cuidado para não parecer tentativa de contraponto.", "retorno": "Contato feito", "retorno_detalhe": "Agradeceu e demonstoru interesse por novas pautas. Está na Bahia, considerar este recorte", "contato": ""}, {"data": "2026-06-15", "materia": "https://valorinveste.globo.com/blogs/alexandre-espirito-santo/coluna/banco-central-nao-faz-tigrinho.ghtml", "veiculo": "Valor Investe", "jornalista": "Alexandre Espírito Santo", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Texto não fala de bets, apenas usa o 'Tigrinho' como analogia às 'apostas' e decisões do BC.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-15", "materia": "Casas de apostas esportivas veem na Copa uma chance de recuperação", "veiculo": "Folha de S. Paulo", "jornalista": "Joe Drape", "acao": "Não entrar em contato", "acao_detalhe": "Veículo Internacional", "analise": "Matéria de mercado internacional sobre Copa como oportunidade de recuperação para casas de apostas. Não priorizaria contato, por ser repostagem NYT e sem gancho direto com regulação brasileira.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-16", "materia": "Bets e Copa do Mundo: combinação pode aumentar o risco de dependência?", "veiculo": "Estadão", "jornalista": "Victória Ribeiro", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria sobre risco de dependência durante a Copa. Tema sensível, com foco em saúde e comportamento. Não enviar estudo; abordagem apenas se for institucional e sem anexo.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-16", "materia": "Vício em bets: grupo de apoio de jogadores anônimos da BA aponta aumento de integrantes após indicações de inteligência artificial", "veiculo": "G1", "jornalista": "", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria sobre aumento de busca por apoio para vício em apostas. Tema sensível e de saúde/comportamento. Não enviar estudo; evitar abordagem ativa.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-17", "materia": "Datafolha: Percepção dos brasileiros de que bets e jogos online são vício cresce", "veiculo": "Infomoney", "jornalista": "Caio César", "acao": "Contato feito", "acao_detalhe": "", "analise": "Repercussão de pesquisa Datafolha sobre percepção de bets como vício. Tema de dados e percepção pública. Cabe contato leve; LCA pode ser útil se a conversa avançar para endividamento/economia das famílias.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-17", "materia": "FUTEBOL E BETS: como a relação dos esportes com apostas atrai adolescentes (especialmente MENINOS) | Estadão", "veiculo": "Estadão", "jornalista": "Roseann Kennedy", "acao": "Contato feito", "acao_detalhe": "", "analise": "Matéria sobre relação entre futebol, bets e atração de adolescentes. Tema sensível, envolvendo menores e risco de exposição. Não enviar estudo; abordagem institucional cuidadosa, sem anexo.", "retorno": "Contato feito", "retorno_detalhe": "Agradeceu informações e disse que volta a nos procurar.", "contato": ""}, {"data": "2026-06-17", "materia": "As bets são a bola da vez do crime organizado', alerta promotor de Justiça", "veiculo": "Estado de Minas", "jornalista": "Ana Luiza Soares", "acao": "Contato feito", "acao_detalhe": "", "analise": "Foco na relação entre mercado ilegal e crime organizado. Estudo sobre mercado ilegal complementa a discussão.", "retorno": "Aguardando resposta", "retorno_detalhe": "Envio do estudo sobre regulação", "contato": "analuizasoares361@gmail.com"}, {"data": "2026-06-17", "materia": "Fazenda vai criar extrato de perdas e ganhos para apostadores de bets", "veiculo": "UOL", "jornalista": "Alexandre Novais Garcia", "acao": "Tentando contato", "acao_detalhe": "", "analise": "Entrevista com secretária da SPA sobre extrato de perdas e ganhos, autoexclusão, publicidade e jogo responsável. Cabe abordagem com estudo sobre regulação, pois a pauta é institucional/regulatória.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-17", "materia": "Não utilize as bets como meio para aumentar sua renda e pagar as contas", "veiculo": "Valor Investe", "jornalista": "Hudson Bessa", "acao": "Tentando contato", "acao_detalhe": "", "analise": "Coluna de educação financeira orientando não usar bets como fonte de renda. Tema sensível, mais opinativo e voltado ao investidor. Eu não enviaria estudo; no máximo contato institucional sem contraponto.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-18", "materia": "Arrecadação com tributação de bets é de R$ 9 bilhões por ano, diz Durigan | Brasil | Valor Econômico", "veiculo": "Valor Econômico", "jornalista": "Mariana Andrade", "acao": "Contato feito", "acao_detalhe": "", "analise": "Matéria sobre arrecadação, tributação e impacto fiscal da regulamentação. Encaixe direto para o estudo sobre mercado ilegal e regulação, que discute como o desenho regulatório influencia a migração para o mercado legal e a arrecadação.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-18", "materia": "Mulheres e jovens pagam a conta do avanço das bets no país", "veiculo": "UOL", "jornalista": "Maria Prata", "acao": "Contato feito", "acao_detalhe": "", "analise": "Coluna sobre impactos sociais das apostas, com foco em grupos vulneráveis. Tema sensível e opinativo. Melhor estratégia é apenas estabelecer relacionamento institucional, sem envio de estudos neste primeiro contato.", "retorno": "Não deu resposta", "retorno_detalhe": "Mensagem enviada", "contato": "(11)98233-3194"}, {"data": "2026-06-18", "materia": "https://www.estadao.com.br/brasil/como-as-bets-atraem-adolescentes-e-atrasam-ate-a-entrada-na-faculdade/", "veiculo": "Estadão", "jornalista": "Roseann Kennedy", "acao": "Contato feito", "acao_detalhe": "", "analise": "Reportagem sobre comportamento, educação e adolescentes. Tema sensível. Não enviar estudos; apenas aproximação institucional, caso pertinente.", "retorno": "Contato feito", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-18", "materia": "https://exame.com/invest/minhas-financas/canetas-de-emagrecimento-e-bets-entram-na-mira-dos-fraudadores-diz-serasa/", "veiculo": "Exame", "jornalista": "Rebecca Crepaldi", "acao": "Contato feito", "acao_detalhe": "", "analise": "O gigantismo do fluxo financeiro das bets atraiu o crime digital. A Serasa aponta que as plataformas viraram alvo central para golpes de roubo de identidade e criação de cadastros falsos, explorando a alta liquidez do setor.", "retorno": "Contato feito", "retorno_detalhe": "Se colocou à disposição quando tivermos pautas e oportunidades", "contato": ""}, {"data": "2026-06-19", "materia": "TJDFT manda bet devolver R$ 180 mil a policial militar viciado em Tigrinho", "veiculo": "Metrópoles", "jornalista": "Andreza Matais", "acao": "Contato feito", "acao_detalhe": "Por e-mail", "analise": "A matéria relata uma decisão judicial envolvendo um apostador diagnosticado com ludopatia, destacando o entendimento da Justiça sobre a vulnerabilidade do consumidor e a responsabilidade da plataforma no caso concreto.", "retorno": "Aguardando resposta", "retorno_detalhe": "Mensagem enviada", "contato": "andreza.matais@metropoles.com"}, {"data": "2026-06-19", "materia": "25 milhões de pessoas usam plataformas ilegais de apostas online, diz ministro da Justiça | G1", "veiculo": "G1", "jornalista": "Alexandro Martello, Mariana Assis", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem destaca a dimensão do mercado ilegal de apostas no Brasil e os desafios enfrentados pelo governo para ampliar a fiscalização, proteger consumidores e fortalecer o mercado regulado.", "retorno": "Contato feito", "retorno_detalhe": "Contato feito com Mariana Assis", "contato": ""}, {"data": "2026-06-19", "materia": "Encontro via In Press 1/07", "veiculo": "TechTudo", "jornalista": "Raquel Alice de Carvalho", "acao": "Encontro In Press", "acao_detalhe": "Encontro In Press", "analise": "", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-19", "materia": "E se acabarem as bets? - 18/06/2026 - Opinião - Folha", "veiculo": "Folha de S. Paulo", "jornalista": "Associação de Mulheres da Indústria do Gaming", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "Artigo de opinião que discute os possíveis impactos econômicos, regulatórios e sociais de uma eventual proibição das apostas no Brasil, sob a perspectiva de representantes da indústria.", "retorno": "Contato feito", "retorno_detalhe": "Foi enviado no grupo de WhatsApp e sugestão de contato institucional da Betano com a associação", "contato": ""}, {"data": "2026-06-22", "materia": "https://www.estadao.com.br/economia/bets-ilegais-recursos-fintechs-sem-autorizacao-bc-fazenda/", "veiculo": "Estadão", "jornalista": "Cícero Cotrim", "acao": "Contato feito", "acao_detalhe": "", "analise": "A matéria mostra como operadores ilegais utilizam instituições financeiras e fintechs sem autorização para movimentar recursos, abordando os desafios da fiscalização financeira e do combate às operações clandestinas.", "retorno": "Contato feito", "retorno_detalhe": "Agradeceu e disse que aceita receber pautas e estudos", "contato": ""}, {"data": "2026-06-22", "materia": "https://www.cnnbrasil.com.br/economia/macroeconomia/governo-vai-penalizar-influenciadores-que-divulgarem-bets-ilegais/", "veiculo": "CNN", "jornalista": "Victória Queiroz", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem apresenta as novas medidas do governo para responsabilizar influenciadores que promovam plataformas ilegais de apostas, reforçando o endurecimento da regulamentação e da fiscalização da publicidade do setor.", "retorno": "Contato feito", "retorno_detalhe": "Agradeceu e disse que aceita receber pautas e estudos", "contato": ""}, {"data": "2026-06-22", "materia": "Decreto fecha lacuna que permitia atuação de bets ilegais, diz regulador de apostas", "veiculo": "Folha de S. Paulo", "jornalista": "Pedro Teixeira", "acao": "Contato feito", "acao_detalhe": "", "analise": "A matéria aborda as mudanças promovidas pelo governo para restringir a atuação de plataformas ilegais, destacando o aperfeiçoamento da regulamentação e os mecanismos adotados para reforçar a fiscalização do setor.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-22", "materia": "https://revistaoeste.com/economia/lula-culpa-ibets-i-por-crise-das-familias-mas-setor-arrecada-bilhoes-para-o-governo/", "veiculo": "Revista Oeste", "jornalista": "Carlo Cauti; Edilson Salgueiro", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem questiona a narrativa de que as apostas seriam responsáveis pelo endividamento das famílias, contrapondo esse discurso ao aumento da arrecadação pública proveniente da regulamentação do setor e defendendo uma abordagem mais ampla sobre os fatores econômicos envolvidos.", "retorno": "Contato feito", "retorno_detalhe": "Carlo Cauti recebeu os estudos e aceita receber novidades sempre que tivermos. Tem interesse em falar com MKT sobre anúncios", "contato": "(19)97128-3448"}, {"data": "2026-06-22", "materia": "https://www.terra.com.br/diversao/gente/como-a-torcida-contra-a-globo-faz-publico-passar-pano-para-caze-sobre-bets,ba8a9e5a5108129dfcccb439931c82c3qhxlerpj.html#google_vignette", "veiculo": "UOL", "jornalista": "Jeff Benício", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Matéria não é sobre bets, mas sobre dinâmica de engajamento e fãs da Cazé TV, apenas cita caso com bets como exemplo", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-22", "materia": "https://neomondo.org.br/colunistas/a-insustentavel-riqueza-das-bets", "veiculo": "Neomondo", "jornalista": "Alexandre Turra", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "Artigo opinativo que questiona o crescimento do setor sob a ótica da sustentabilidade social, defendendo que os ganhos econômicos das apostas são acompanhados por impactos negativos para a sociedade. O texto tem caráter analítico e opinativo.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-22", "materia": "https://www.estadao.com.br/tv/economia/o-que-explica-o-crescimento-das-bets-no-brasil/", "veiculo": "Estadão", "jornalista": "Camila Farani", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "A matéria em vídeo do Estadão sintetiza o fenômeno das apostas no país como o resultado de uma \"tempestade perfeita\". O crescimento exponencial é explicado pela combinação de três fatores principais: a forte cultura de paixão nacional pelo futebol, a hiperconectividade (com a popularização do Pix e de smartphones), e a agressividade do marketing digital, que utiliza influenciadores e patrocínios milionários para normalizar o jogo e criar a ilusão de ganho fácil e rápido em um cenário de vulnerabilidade econômica.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-22", "materia": "https://www.uol.com.br/universa/noticias/redacao/2026/06/20/vicio-em-bets-leva-familias-a-crises-e-sobrecarrega-mulheres.ghtm", "veiculo": "UOL", "jornalista": "Sem autor", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Reportagem sobre os impactos familiares da ludopatia, mostrando como o vício em apostas afeta a dinâmica doméstica, amplia o endividamento e recai especialmente sobre as mulheres como principais responsáveis pela reorganização financeira e emocional da família.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "https://noticias.uol.com.br/cotidiano/ultimas-noticias/2026/06/23/nunca-contou-ele-escondia-vicio-em-apostas-e-divida-de-r-15-milhao.ghtm", "veiculo": "UOL", "jornalista": "Igor Ribeiro", "acao": "Contato feito", "acao_detalhe": "", "analise": "Relatos reais expõem o drama da dependência oculta, onde indivíduos escondem o vício até acumularem dívidas milionárias (como o caso de R$ 1,5 milhão), desestruturando famílias inteiras antes que qualquer sinal de ajuda seja percebido.", "retorno": "Não deu resposta", "retorno_detalhe": "Sem resposta", "contato": "(11)92015-8721"}, {"data": "2026-06-23", "materia": "Como a Copa do Mundo escancara o avanço das bets - Nexo Jornal", "veiculo": "Nexo", "jornalista": "Mariana Souza", "acao": "Contato feito", "acao_detalhe": "", "analise": "A reportagem analisa como a Copa do Mundo amplia a exposição das empresas de apostas e discute seus impactos econômicos e sociais, abordando temas como publicidade, consumo, endividamento e regulamentação do setor.", "retorno": "Aguardando resposta", "retorno_detalhe": "Estudo do LCA sobre inadimplência enviado - mais pertinente à pauta", "contato": "(41)8799-3154"}, {"data": "2026-06-23", "materia": "O Brasil virou o 5º maior mercado de apostas do mundo em 12 meses. Isso aconteceu por acaso? - Estadão", "veiculo": "Estadão", "jornalista": "Camila Farani", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "Artigo de opinião que analisa os fatores que impulsionaram a rápida expansão do mercado de apostas no Brasil após a regulamentação. A autora argumenta que o crescimento do setor decorre da combinação entre avanço tecnológico, mudanças regulatórias, demanda reprimida e maior segurança jurídica, defendendo que o fenômeno é resultado da evolução do mercado e não um processo espontâneo.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "https://www.estadao.com.br/opiniao/colunas-do-dia/economia/duquesa-de-tax/tributacao-bets-mais-leve-loterias-tradicionais/", "veiculo": "Estadão", "jornalista": "Duquesa de tax", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "Coluna opinativa que discute a carga tributária incidente sobre as apostas em comparação às loterias tradicionais, analisando possíveis distorções do sistema tributário e seus efeitos econômicos.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "Bets: sem publicidade legal, vence o ilegal", "veiculo": "Jota", "jornalista": "Tiago Gomes", "acao": "Não entrar em contato", "acao_detalhe": "Colunista Especialista", "analise": "Artigo de opinião que defende a importância de um ambiente regulatório equilibrado para fortalecer o mercado legal de apostas, discutindo os efeitos das restrições à publicidade sobre a competitividade do setor.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "Gerente é condenado por desviar R$ 170 mil de empresa para apostas online", "veiculo": "UOL", "jornalista": "Graciliano Rocha", "acao": "Tentando contato", "acao_detalhe": "", "analise": "Reportagem sobre um caso criminal envolvendo desvio de recursos corporativos para financiar apostas online. O foco é o crime financeiro e suas consequências jurídicas, utilizando as apostas como contexto do caso.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-23", "materia": "Vício em apostas: preocupação com jovens cresce na Copa; veja vídeo", "veiculo": "Folha de S. Paulo", "jornalista": "Agência de notícias", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Reportagem sobre o aumento da preocupação com a influência das apostas entre jovens durante grandes eventos esportivos, abordando especialistas, prevenção e riscos relacionados à exposição ao tema.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-24", "materia": "Betano enfrenta novo problema na Justiça trabalhista | VEJA", "veiculo": "Veja Negócios", "jornalista": "Machado da Costa", "acao": "Contato feito", "acao_detalhe": "Edu está em contato com Veja Negócios para apurar como foi a condução da matéria internamente", "analise": "O setor também enfrenta pressões internas e regulatórias no âmbito corporativo, com grandes operadoras (como a Betano) enfrentando processos e novas contestações na Justiça do Trabalho.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-24", "materia": "Erika Hilton vai ao MPF para barrar propaganda de bets por comentaristas na Copa | VEJA", "veiculo": "Veja", "jornalista": "Laila Nery", "acao": "Tentando contato", "acao_detalhe": "", "analise": "A deputada Erika Hilton acionou o Ministério Público Federal (MPF) para barrar a publicidade de bets feita por comentaristas durante a cobertura da Copa do Mundo, tentando frear a exposição em massa e a normalização do jogo durante grandes eventos.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-29", "materia": "Conar processa 3 ações de bets nas transmissões da CazéTV", "veiculo": "Meio e Mensagem", "jornalista": "Bárbara Sacchitiello", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "O Conar determinou a suspensão preventiva de três ações publicitárias de casas de apostas veiculadas na CazéTV por possível descumprimento das regras de autorregulamentação.", "retorno": "Contato feito", "retorno_detalhe": "estudo sobre mercado regular enviado", "contato": ""}, {"data": "2026-06-29", "materia": "Copa do Mundo amplia golpes de bets e deepfakes no Brasil - Canaltech", "veiculo": "Canaltech", "jornalista": "Marcelo Fischer Salvatico", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "A matéria alerta para o aumento de golpes envolvendo apostas durante a Copa do Mundo, com uso de deepfakes e páginas falsas que simulam promoções utilizando a imagem de atletas.", "retorno": "Contato feito", "retorno_detalhe": "estudo sobre mercado regular enviado", "contato": ""}, {"data": "2026-06-29", "materia": "CazéTV e bets: advogados veem lacuna em legislação - 29/06/2026 - Painel S.A. - Folha", "veiculo": "Folha de S. Paulo", "jornalista": "Alex Sabino (interino), Luana Franzão e Maria Clara Guilherme", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "Emissoras de TV hoje enfrentam um vácuo regulatório e não são punidas por exibir propagandas de operadoras irregulares.", "retorno": "Contato feito", "retorno_detalhe": "Alex Sabino (estudo sobre mercado regular enviado)", "contato": ""}, {"data": "2026-06-29", "materia": "Epidemia de bets tem solução? O que o Brasil pode aprender com outros países - Estadão", "veiculo": "Estadão", "jornalista": "Edison Veiga", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "A reportagem analisa experiências internacionais na regulamentação das apostas esportivas e discute como mecanismos como limites de gastos, monitoramento de comportamento e ferramentas de jogo responsável podem servir de referência para o modelo brasileiro.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-30", "materia": "Durigan promete novas restrições à publicidade de bets", "veiculo": "Poder 360", "jornalista": "Julia Amoedo", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "A reportagem informa que o ministro da Fazenda, Dario Durigan, anunciou que o governo pretende adotar novas restrições à publicidade das casas de apostas, por meio de atos administrativos ou, se necessário, medida provisória, reforçando a agenda de proteção ao consumidor.", "retorno": "Contato feito", "retorno_detalhe": "e-mail + estudo regulação enviado", "contato": ""}, {"data": "2026-06-30", "materia": "OPINIÃO. As bets, como estão, são o gol contra da Copa - Brazil Journal", "veiculo": "Brazil Journal", "jornalista": "José Del Chiaro", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Em artigo de opinião, o autor critica o volume e a intensidade da publicidade das casas de apostas durante a Copa do Mundo, defendendo que o modelo atual gera desgaste para o esporte e para a sociedade.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-06-30", "materia": "“Bancada das bets”: quem são os aliados das casas de apostas no Congresso Nacional", "veiculo": "Agência Pública", "jornalista": "Rafael Oliveira", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A reportagem mapeia a chamada \"bancada das bets\" no Congresso Nacional, identificando deputados e senadores que atuaram em defesa de interesses do setor de apostas durante a tramitação da regulamentação e em articulações políticas posteriores.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-04-23", "materia": "https://valor.globo.com/financas/noticia/2026/04/23/bets-tambem-disputam-bolso-do-investidor.ghtml", "veiculo": "Valor Econômico", "jornalista": "Adriana Cotias", "acao": "Contato feito", "acao_detalhe": "", "analise": "As bets saíram do campo do entretenimento e passaram a competir diretamente pelo orçamento que o brasileiro antes destinava a investimentos tradicionais, canibalizando a formação de poupança no país.", "retorno": "Não deu resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-04-28", "materia": "https://oglobo.globo.com/blogs/miriam-leitao/post/2026/04/apostas-em-bets-tiraram-r-1438-bilhoes-do-comercio-em-dois-anos-mostra-estudo-inedito-da-cnc.ghtml", "veiculo": "O Globo", "jornalista": "Luciana Casemiro", "acao": "Contato feito", "acao_detalhe": "", "analise": "Um estudo da CNC revelou o impacto macroeconômico devastador do setor: em apenas dois anos, as apostas drenaram R$ 14,38 bilhões do comércio tradicional, subtraindo recursos que iriam para o consumo de bens essenciais e serviços.", "retorno": "Não deu resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-06", "materia": "Bets usam 'texto-foguete' e promoções restritas para reter jogadores e captar clientes fiéis ", "veiculo": "Folha de S. Paulo", "jornalista": "Pedro S. Teixeira", "acao": "Contato feito", "acao_detalhe": "Pedro recebeu materiais e ficou interessado em encontro", "analise": "A Folha de S.Paulo analisa táticas de marketing digital e o uso de mensagens curtas para engajar usuários em plataformas de apostas após o cadastro esportivo. O texto indica um movimento de atenção de especialistas e do mercado para a transparência em promoções personalizadas, o que reforça a necessidade de manutenção de rígidos padrões de conformidade. A matéria também saiu no impresso", "retorno": "Retorno", "retorno_detalhe": "Pedro recebeu materiais e quer encontro", "contato": ""}, {"data": "2026-07-02", "materia": "Blindagem ao cidadão ou arma eleitoral? O que está por trás de projeto para proibir bets", "veiculo": "Agência Pública", "jornalista": "Ed Wanderley, Anna Greg", "acao": "Contato feito", "acao_detalhe": "Ed Wanderley", "analise": "Reportagem investigativa da Agência Pública avalia os bastidores do Projeto de Lei nº 1808/2026, apresentado pelo PT, que visa proibir a atividade no país. A análise aponta que a iniciativa mistura a busca por proteção social com estratégias políticas para constranger adversários no parlamento, contando inclusive com suporte de frentes conservadoras.", "retorno": "Retorno", "retorno_detalhe": "Ed revebeu estudos e quer manter contato para futuras reportagens", "contato": ""}, {"data": "2026-07-02", "materia": "Uma defesa da ineficiência ", "veiculo": "Folha de S. Paulo", "jornalista": "Hélio Schwartsman", "acao": "Contato feito", "acao_detalhe": "Colunista", "analise": "O colunista Hélio Schwartsman argumenta na Folha de S.Paulo que a regulação de mercados associados a comportamentos compulsivos exige a introdução proposital de fricções operacionais. O jornalista propõe que mecanismos voltados a reduzir a agilidade e a facilidade extrema de depósitos digitais podem ser ferramentas de saúde pública mais eficientes do que a repressão legal pura e simples. A matéria também foi publicada no jornal impresso.", "retorno": "Não deu resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-07", "materia": "Temer revê bets, chama 8/1 de golpe e fala sobre Vorcaro: \"Muito doce\"", "veiculo": "Correio Braziliense", "jornalista": "Letícia Passos", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Repercussão de entrevista concedida ao UOL em que Michel Temer faz uma autocrítica sobre a autorização das apostas esportivas e defende maior fiscalização e restrições ao uso de recursos de programas sociais. Como o conteúdo tem natureza política, parte de uma declaração já concedida a outro veículo e não abre uma apuração específica sobre o setor, recomenda-se apenas monitoramento, sem abordagem ativa.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-08", "materia": "O Brasil perder para as bets dói mais que perder a Copa", "veiculo": "Folha de S.Paulo", "jornalista": "Daniel Guanaes", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Artigo de opinião com posicionamento crítico e tese fechada sobre a exposição das bets durante a Copa, relacionando a presença publicitária do setor a impactos sociais e de saúde. Por se tratar de texto opinativo assinado por colaborador e sem abertura para contraponto jornalístico, não se recomenda contato. O conteúdo deve ser acompanhado como sinal reputacional do aumento da crítica à associação entre apostas e esporte.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-08", "materia": "As bets não ganham quando você perde; ganham porque a matemática sempre foi delas", "veiculo": "Estadão", "jornalista": "Camila Farani", "acao": "Não entrar em contato", "acao_detalhe": "Colunista", "analise": "Coluna de opinião que explica o modelo de negócio das operadoras a partir de probabilidade, precificação, dados e margens embutidas nas cotações. O texto oferece uma leitura mais técnica e profissional do setor, ao mesmo tempo que reforça a desvantagem matemática do apostador e afasta a ideia de enriquecimento rápido. Cabe contato de relacionamento, sem tom defensivo, para apresentar pautas futuras sobre tecnologia, inteligência de dados, transparência e jogo responsável.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-06", "materia": "Polícia Federal mira 87 empresas suspeitas de lavar dinheiro de bets ilegais com cripto", "veiculo": "Folha de S.Paulo", "jornalista": "Pedro S. Teixeira", "acao": "Contato feito", "acao_detalhe": "", "analise": "A matéria trata de uma operação da Polícia Federal contra empresas suspeitas de lavar recursos provenientes de plataformas ilegais por meio de criptoativos. Por envolver investigação criminal em andamento, a recomendação é apenas monitorar a repercussão e observar se o conteúdo diferencia adequadamente o mercado regulado das operações ilegais. Uma abordagem ativa neste momento pode ser interpretada como tentativa de interferir ou desviar o foco da apuração.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-07", "materia": "Sem regulamentação, mercados preditivos crescem no Brasil e viram desafio para o governo", "veiculo": "G1", "jornalista": "Matheus Gouvea de Andrade", "acao": "Tentando contato", "acao_detalhe": "Buscando contato", "analise": "A reportagem aborda a expansão de mercados preditivos baseados em criptoativos fora do marco regulatório tradicional. O tema oferece uma oportunidade de relacionamento para reforçar, em pautas futuras, a distinção entre plataformas autorizadas de apostas esportivas e modelos que operam sem enquadramento específico, além de discutir tecnologia, compliance e segurança do consumidor.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-07", "materia": "Não é azar, é de propósito: o cálculo por trás das bets para que o brasileiro perca sempre", "veiculo": "Agência Pública", "jornalista": "Ed Wanderley, Anna Greg", "acao": "Contato feito", "acao_detalhe": "Ed Wanderley", "analise": "Reportagem crítica que descreve o funcionamento estatístico, os algoritmos e a formação das cotações sob a tese de que a estrutura comercial das plataformas é desenhada para assegurar vantagem permanente às empresas. Como o enquadramento é investigativo e a narrativa já está consolidada, recomenda-se não realizar abordagem direta. O conteúdo deve ser monitorado como sinal reputacional sobre transparência, probabilidades e percepção de assimetria entre operador e usuário.", "retorno": "Retorno", "retorno_detalhe": "Recebeu estudos e quer manter contato", "contato": ""}, {"data": "2026-07-07", "materia": "As bets e a nova arquitetura da impulsividade humana", "veiculo": "Veja", "jornalista": "Ilana Pinsky", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Artigo de abordagem científica sobre fatores psicológicos, impulsividade, design de interface e facilidade de acesso nas apostas online. Por tratar de saúde mental e mecanismos de comportamento, a recomendação é não abordar a autora a partir desta publicação. A matéria deve servir como insumo para acompanhar o debate sobre proteção de públicos vulneráveis, comunicação responsável e recursos de prevenção disponíveis nas plataformas.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-06", "materia": "Defesa da CazéTV diz que probabilidade esportiva não é ação publicitária e nega irregularidades", "veiculo": "Folha de S.Paulo", "jornalista": "Pedro S. Teixeira", "acao": "Contato feito", "acao_detalhe": "", "analise": "A matéria apresenta os argumentos jurídicos da CazéTV em processo no Conar e discute os limites entre conteúdo informativo, entretenimento e publicidade. O tema é relevante para relacionamento com o jornalista, especialmente em pautas futuras sobre regras de comunicação, transparência de conteúdo patrocinado e boas práticas do setor. O contato deve ser institucional, sem comentar o mérito do caso específico ou assumir a defesa de terceiros. A matéria também foi publicada no impresso.", "retorno": "Retorno", "retorno_detalhe": "Recebeu estudos e quer marcar encontro", "contato": ""}, {"data": "2026-07-06", "materia": "Superbet anula apostas de longo prazo no Brasil campeão da Copa e reembolsa clientes", "veiculo": "BNLData", "jornalista": "Magno José", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Notícia sobre uma decisão operacional de concorrente, que cancelou mercados de longo prazo e reembolsou clientes. Não há oportunidade imediata de posicionamento ou relacionamento a partir deste conteúdo. Recomenda-se apenas monitorar a repercussão e registrar o caso como referência competitiva sobre gestão de mercados, comunicação com usuários e políticas de reembolso.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-05", "materia": "Artigo compara publicidade de bets à de produtos controlados", "veiculo": "Estadão", "jornalista": "Fabiano Lana", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Artigo de opinião com posicionamento crítico, que compara a expansão da publicidade de apostas à comunicação de produtos controlados e atribui ao lobby do setor influência sobre a legislação. Como o texto apresenta uma tese fechada e não abre espaço para apuração ou contraponto, recomenda-se apenas monitoramento. A publicação sinaliza a permanência de pressões por restrições mais severas à publicidade e ao patrocínio esportivo.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-05", "materia": "Sesi e Senai lançam cartilhas para conscientizar sobre riscos de bets", "veiculo": "Poder 360", "jornalista": "CNI", "acao": "Tentando contato", "acao_detalhe": "Sugerir contato com a CNI para saber mais sobre a cartilha", "analise": "Conteúdo originalmente produzido pela CNI e republicado pelo Poder360 sobre cartilhas educativas voltadas a estudantes e trabalhadores da indústria. A abordagem é factual e preventiva, com foco em educação financeira, saúde emocional e sinais de perda de controle. Como não se trata de apuração original do veículo, não há oportunidade direta de contato com jornalista. O material pode ser usado como referência para iniciativas de educação e jogo responsável.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-08", "materia": "Governo Lula notifica 37 fintechs por movimentar dinheiro de bets ilegais", "veiculo": "Folha de S.Paulo", "jornalista": "João Gabriel; Idiana Tomazelli", "acao": "Entrar em contato", "acao_detalhe": "Estudo sobre o mercado ilegal e crime organizado", "analise": "A reportagem mostra o avanço da fiscalização financeira sobre operadores não autorizados e instituições que processam seus recursos. É uma pauta diretamente aderente ao posicionamento sobre diferenciação entre mercado regulado e ilegal, segurança jurídica e prevenção à lavagem de dinheiro.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-09", "materia": "Propaganda de bet terá alertas e comentaristas não poderão sugerir apostas", "veiculo": "UOL", "jornalista": "Davi Vittorazzi", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A matéria antecipa as novas exigências federais para publicidade, incluindo alertas obrigatórios, restrições a mensagens de ganho e vedação de recomendações em transmissões esportivas. Cabe aproximação institucional para apresentar os controles de compliance e jogo responsável adotados pela Betano.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-10", "materia": "Três alertas para quem aposta on-line: veja o que vai mudar na publicidade das bets", "veiculo": "O Globo", "jornalista": "Bernardo Lima", "acao": "Entrar em contato", "acao_detalhe": "Estudo sobre mercado legal", "analise": "A reportagem sintetiza as mudanças no formato das campanhas e os novos alertas obrigatórios. É uma oportunidade de relacionamento para reforçar que operadores autorizados devem incorporar as regras à comunicação e diferenciar-se de plataformas que atuam fora do marco regulatório.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-11", "materia": "Governo tira 2,8 milhões de beneficiários do Bolsa Família das bets; 900 mil já saíram voluntariamente | VEJA", "veiculo": "Veja", "jornalista": "Juliana Elias", "acao": "Entrar em contato", "acao_detalhe": "Estudo LCA", "analise": "A matéria aborda bloqueios determinados pelo STF e o crescimento da autoexclusão voluntária. O tema permite apresentar, de forma técnica, os mecanismos de identificação, restrição de acesso e proteção ao usuário exigidos no mercado regulado.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-12", "materia": "A ‘tônica’ de Lula com bets, blusinhas e dívidas | VEJA", "veiculo": "Veja", "jornalista": "Nicholas Shores", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A menção às apostas aparece como elemento de uma disputa eleitoral mais ampla sobre governo, consumo e endividamento. O enfoque é político e opinativo, sem abertura clara para contribuição técnica ou institucional do setor.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-12", "materia": "As primeiras evidências de ludopatia no Brasil - 12/07/2026 - Opinião - Folha", "veiculo": "Folha de S.Paulo", "jornalista": "Alexandre Agra Belmonte; Guilherme Guimarães Feliciano", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "Artigo assinado que relaciona transtorno do jogo, dever de cuidado e responsabilização judicial das operadoras. Por se tratar de uma tese jurídica e de saúde já estruturada, não se recomenda abordagem reativa; o conteúdo deve ser acompanhado para preparação de mensagens sobre proteção ao usuário.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-13", "materia": "Prefeitura do Rio proíbe propagandas de bets em espaços públicos e eventos do município", "veiculo": "O Globo", "jornalista": "João Vitor Costa ", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A reportagem registra o decreto municipal que restringe publicidade em espaços públicos e eventos dependentes de autorização da prefeitura. Como é uma cobertura factual e local, recomenda-se acompanhar os desdobramentos jurídicos e regulatórios, sem contato reativo imediato.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-13", "materia": "Rio proíbe publicidade de bets em espaços públicos, e prefeito chama casas de aposta de 'praga'", "veiculo": "Folha de S.Paulo", "jornalista": "Leonardo Vieceli", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A cobertura combina o decreto municipal, declarações críticas do prefeito e manifestação de entidade do setor. Como o outro lado já foi registrado e o tom político está consolidado, não há necessidade de nova abordagem; cabe monitorar eventual replicação da medida em outras capitais.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-13", "materia": "“Faz você perder dinheiro”: Governo federal obriga Bets a alertar sobre riscos das apostas", "veiculo": "Agência Pública", "jornalista": "Maira Escardovelli", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A matéria destaca as advertências obrigatórias e os riscos associados às apostas. O enquadramento é regulatório e de proteção ao consumidor, sem espaço evidente para contraponto institucional; recomenda-se apenas acompanhar a aplicação das novas regras.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-13", "materia": "Bets escapam da fiscalização federal usando licenças estaduais", "veiculo": "Agência Pública", "jornalista": "Isabel Seta", "acao": "Entrar em contato", "acao_detalhe": "Enviar estudo sobre mercado irregular e crime organizado", "analise": "A investigação evidencia diferenças entre licenças estaduais e federais, falhas de geolocalização e exigências regulatórias desiguais. É uma pauta altamente aderente ao debate sobre segurança jurídica, fiscalização e necessidade de distinguir operadores federais autorizados de estruturas locais com atuação irregular.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-13", "materia": "Governo endurece regras e obriga alertas em anúncios de bets", "veiculo": "Meio & Mensagem", "jornalista": "Bárbara Sacchitiello", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A reportagem detalha as novas regras de publicidade e seu impacto direto sobre campanhas, influenciadores e transmissões esportivas. É uma oportunidade prioritária de relacionamento com veículo de trade para apresentar como a Betano adapta processos, aprovações e mensagens às novas exigências.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-13", "materia": "A bolada milionária que brasileiros gastaram em bets na Copa do Mundo | VEJA", "veiculo": "Veja", "jornalista": "Laryssa Borges", "acao": "Entrar em contato", "acao_detalhe": "Enviar estudo LCA", "analise": "A matéria usa dados de volume de apostas durante a Copa para ampliar o debate político e econômico sobre o setor. Cabe contato com informações verificáveis sobre comportamento financeiro, regulação e dimensão do mercado ilegal, evitando abordagem de contestação direta.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-13", "materia": "Brasileiros processam bets para conseguir receber prêmios: 'dinheiro não sai' - BBC News Brasil", "veiculo": "Terra / BBC News Brasil", "jornalista": "Camilla Veras Mota", "acao": "Contato feito", "acao_detalhe": "Jornalista nos consultou para fazer matéria. Posicionamento de comentar processos e reforçamos nossas práticas de jogo responsável", "analise": "A reportagem reúne ações judiciais envolvendo pagamentos, bloqueios de contas e alegações de falha no dever de cuidado. Por tratar de litígios e transtorno do jogo, não se recomenda abordagem proativa; o material deve subsidiar preparação de respostas sobre atendimento, monitoramento e proteção ao usuário.", "retorno": "Contato feito", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-13", "materia": "Prefeito do Rio compara bets a cigarro e anuncia proibição de propaganda: ‘São uma praga’ - Estadão", "veiculo": "Estadão", "jornalista": "Rayanderson Guerra", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A reportagem enfatiza a comparação feita pelo prefeito entre apostas e tabagismo, reforçando um ambiente reputacional adverso. O tom é político e crítico, sem abertura clara para contribuição técnica; recomenda-se monitorar a repercussão e possíveis iniciativas semelhantes em outras cidades.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-14", "materia": "Fachin se reunirá com Fazenda para discutir bets no Brasil - 14/07/2026 - Mônica Bergamo - Folha", "veiculo": "Folha de S.Paulo", "jornalista": "Mônica Bergamo", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "A nota antecipa reunião entre o STF e o Ministério da Fazenda antes do julgamento sobre a constitucionalidade da legislação. É um tema institucional de alta relevância, mas a publicação não oferece espaço para abordagem imediata; recomenda-se monitorar o encontro e preparar mensagens sobre robustez regulatória e fiscalização.", "retorno": "Aguardando resposta", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-14", "materia": "Bets apoiam mudança na publicidade e citam mercado ilegal", "veiculo": "Meio & Mensagem", "jornalista": "Taís Farias", "acao": "Contato feito", "acao_detalhe": "Jornalista nos consultou para fazer a matéria", "analise": "A matéria registra o apoio de entidades e empresas às novas diretrizes, com ênfase na necessidade de combater operadores ilegais. É uma oportunidade clara de relacionamento para reforçar o posicionamento da Betano em favor de publicidade responsável, proteção do consumidor e fiscalização efetiva do mercado clandestino.", "retorno": "Contato feito", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-14", "materia": "O que muda com a proibição de anúncios de bets no Rio? Entenda", "veiculo": "O Globo", "jornalista": "Rayanderson Guerra", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A reportagem detalha os efeitos imediatos do decreto, inclusive sobre novos contratos e eventos municipais, e discute a competência do município. É a cobertura mais adequada para uma aproximação técnica, com informações sobre o marco federal, segurança jurídica e diferenciação entre publicidade de operadores regulados e ilegais.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-14", "materia": "Dos bastidores às frentes parlamentares, bets se unem em lobby subterrâneo no Congresso", "veiculo": "Agência Pública", "jornalista": "Caio de Freitas; Dyepeson Martins; Duda Sousa; Ed Wanderley; Maira Escardovelli; Thiago Domenici", "acao": "Contato feito", "acao_detalhe": "Já estamos em contato com Ed Wanderley qye já recebeu nossos estudos e está aberto para novos conteúdos", "analise": "A investigação descreve a atuação política do setor no Congresso sob uma perspectiva crítica. Como a tese e o enquadramento já estão consolidados, não se recomenda contato reativo; o conteúdo deve ser monitorado para orientar mensagens de transparência, advocacy responsável e interlocução institucional.", "retorno": "Contato feito", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-13", "materia": "Ministério da Justiça notifica Apple e Google por disponibilizar bets para menores de idade - Estadão", "veiculo": "Estadão", "jornalista": "Levy Teles", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "A matéria aborda a cobrança do governo por barreiras que impeçam menores de instalar aplicativos de apostas. Por envolver proteção de crianças e adolescentes, não se recomenda contraponto reativo; a pauta deve ser acompanhada para reforço interno de mensagens sobre verificação de idade e controles de acesso.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-15", "materia": "TSE libera campanha do governo Lula sobre bets no defeso eleitoral", "veiculo": "Metrópoles", "jornalista": "Carolina Nogueira / Coluna Igor Gadelha", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A matéria informa que o TSE autorizou campanha governamental de prevenção aos danos das apostas durante o defeso eleitoral. O conteúdo reforça a centralidade da saúde pública e tende a ampliar a pressão reputacional sobre o setor; recomenda-se monitorar as peças da campanha e seus impactos, sem abordagem reativa.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-14", "materia": "Acesso de crianças faz juiz mandar suspender Pixbet — matéria impressa do Estadão", "veiculo": "Estadão", "jornalista": "Vinícius Valfré", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A decisão judicial envolve uma operadora concorrente e a comprovação de medidas eficazes contra o acesso de menores. O tema é sensível e específico, sem recomendação de contato; deve ser monitorado por seu potencial de elevar o escrutínio sobre controles de idade em todo o setor.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-15", "materia": "Eduardo Cavaliere: ‘É uma posição política’, diz prefeito sobre proibir propaganda de bets no Rio - Estadão", "veiculo": "Estadão", "jornalista": "Rayanderson Guerra", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A entrevista reforça que a proibição municipal é uma escolha política do prefeito, e não apenas uma medida administrativa. Como o posicionamento está consolidado e o conteúdo tem caráter político, não se recomenda abordagem reativa; cabe acompanhar eventual judicialização e replicação em outras cidades.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-15", "materia": "Medidas contra bets são muito tímidas - Estadão", "veiculo": "Estadão", "jornalista": "Editorial", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "O editorial defende restrições mais severas, aproximando a publicidade de apostas das regras aplicadas ao tabaco. Por representar a posição institucional do jornal, não há espaço para contato ou contraponto; o texto é relevante como indicador de ambiente reputacional e pressão por novas limitações.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-15", "materia": "Opinião | A atividade de \"tipsters\" foi proibida no Brasil?", "veiculo": "Poder 360", "jornalista": "Udo Seckelmann; Pedro Heitor de Araújo", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "O artigo interpreta o alcance das novas regras para influenciadores e diferencia conteúdo editorial de comunicação comercial. Como se trata de análise jurídica assinada, não se recomenda contato; o texto pode ser usado para acompanhar divergências de interpretação e orientar o compliance de parcerias.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-09", "materia": "Ministério da Fazenda derruba 56 mil páginas clandestinas — Broadcast/Estadão", "veiculo": "Broadcast / Estadão", "jornalista": "Sem autor identificado", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "O balanço oficial sobre a retirada de páginas clandestinas reforça a dimensão do mercado ilegal e a atuação fiscalizatória do governo. É uma pauta diretamente aderente ao estudo sobre regulação e pode sustentar relacionamento com foco em concorrência desleal, proteção do consumidor e efetividade do bloqueio financeiro e digital.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-10", "materia": "Como a arquitetura das plataformas de bets induz ao aumento do vício em apostas - Estadão", "veiculo": "Estadão", "jornalista": "Cristiane Barbieri", "acao": "Não entrar em contato", "acao_detalhe": "", "analise": "A matéria discute técnicas de design, vieses cognitivos e mecanismos de engajamento associados ao comportamento dos usuários. O enfoque é sensível e crítico, sem recomendação de contato reativo; deve subsidiar mensagens sobre monitoramento de risco, intervenções e limites de comunicação.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-10", "materia": "Brasil tem quase 4 milhões de pessoas proibidas de apostar em bets; saiba quem são - Estadão", "veiculo": "Estadão", "jornalista": "Raphael Ramos", "acao": "Entrar em contato", "acao_detalhe": "", "analise": "A reportagem mapeia os grupos legalmente impedidos de participar, incluindo menores e pessoas vinculadas ao esporte. É uma oportunidade de relacionamento para explicar os controles de identificação, cruzamento de bases, bloqueios e restrições exigidos das operadoras autorizadas.", "retorno": "", "retorno_detalhe": "", "contato": ""}, {"data": "2026-07-08", "materia": "Bets na Copa: a 'caixa preta' dos anúncios de apostas no Facebook e Instagram - BBC News Brasil", "veiculo": "BBC News Brasil", "jornalista": "Leandro Prazeres", "acao": "Não entrar em contato", "acao_detalhe": "Jornalista nos procurou para posicionamento. Não respondemos.", "analise": "A reportagem investiga a relação entre apostas, endividamento familiar e sofrimento mental. Por tratar de impactos sociais e de saúde, não se recomenda abordagem proativa sem demanda específica do veículo; o conteúdo deve ser usado para preparar respostas baseadas em evidências sobre prevenção, monitoramento e encaminhamento de usuários em risco.", "retorno": "", "retorno_detalhe": "", "contato": ""}];
+const SEED_DATA_JOGOS = [{"editoria": "Propaganda e Marketing", "veiculo": "SBT NEWS", "jornalista": "Basília Rodrigues", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Regular", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "SuperCopa Rei - Flamengo x Corinthians - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Política", "veiculo": "O Globo", "jornalista": "Manoel Ventura", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "SuperCopa Rei - Flamengo x Corinthians - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Política", "veiculo": "O Globo", "jornalista": "Manoel Ventura", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Almoço de relacionamento", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Política", "veiculo": "Metrópoles", "jornalista": "Arthur de Souza", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Regular", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "SuperCopa Rei - Flamengo x Corinthians - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Lifestyle", "veiculo": "Jornal de Brasilia", "jornalista": "Camila Coimbra", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Regular", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "SuperCopa Rei - Flamengo x Corinthians - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Economia", "veiculo": "Veja", "jornalista": "Matheus Netto", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Regular", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "SuperCopa Rei - Flamengo x Corinthians - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Negócios", "veiculo": "Globo News", "jornalista": "Denise Lacerda", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Regular", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "SuperCopa Rei - Flamengo x Corinthians - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Cidades", "veiculo": "Band DF", "jornalista": "Anny Elza (pai e irmão)", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Regular", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "SuperCopa Rei - Flamengo x Corinthians - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Propaganda e Marketing", "veiculo": "Poder 360", "jornalista": "Brunno Kono (Sobrinhos)", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Regular", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "SuperCopa Rei - Flamengo x Corinthians - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Jorge Natan", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "SuperCopa Rei - Flamengo x Corinthians - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Jorge Natan", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Flamengo x Palmeiras", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Bets", "veiculo": "Media Bet", "jornalista": "Paulo Sérgio Costa", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Ruim", "observacoes": "Apresentou compartamento inadequado na press trip", "mes": "Fevereiro", "ano": 2026, "evento": "Brasileirão 2ª rodada - Flamengo x Internacional - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Bets", "veiculo": "Media Bet", "jornalista": "Paulo Sérgio Costa", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Ruim", "observacoes": "Apresentou compartamento inadequado na press trip", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Flamengo x Vasco", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Bets", "veiculo": "Media Bet", "jornalista": "Paulo Sérgio Costa", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Ruim", "observacoes": "Apresentou compartamento inadequado na press trip", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Japão", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Arquibancada Tricolor", "jornalista": "Marcelo Vieira Ferreira Sobrinho", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "Paulistão 7º Rodada - São Paulo x Primavera - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Esportes", "veiculo": "TV Globo - RS", "jornalista": "Marcio Ramos", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "Brasileirão 4ª rodada - Grêmio x Atlético-MG - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Fred Gomes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "Recopa Sul-Americana - Flamengo x Lanus - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Fred Gomes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "Final do Carioca - Fluminense x Flamengo", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Economia", "veiculo": "Valor Econômico", "jornalista": "Rafael Rosas", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "Recopa Sul-Americana - Flamengo x Lanus - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Cidades", "veiculo": "Extra", "jornalista": "Ana Veloso", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "Recopa Sul-Americana - Flamengo x Lanus - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Esportes", "veiculo": "TV Record", "jornalista": "Rodrigo Bernardino e Maria Eduarda Sabbado", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "Recopa Sul-Americana - Flamengo x Lanus - OK", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Janir Junior", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "Final do Carioca - Fluminense x Flamengo", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "TV Record", "jornalista": "Alessandro Isabel", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "Brasileirão 5ª Rodada - Bahia x Vitória", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "Bahia Econômica", "jornalista": "João Paulo Almeida", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "Brasileirão 5ª Rodada - Bahia x Vitória", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Priscilla Basílio", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "Superliga - Flamengo x Sesi Bauru", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Priscilla Basílio", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Priscilla Basílio", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brasil x Noruega", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Alexandre Alliatti", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "Brasileirão 6ª Rodada - Internacional x Bahia", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Alexandre Alliatti", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Brasileirão - 11ª rodada - Inter x Grêmio", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Placar", "jornalista": "José Ilan", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "Brasileirão 8ª Rodada - Fluminense x Atlético-MG", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "about Rio", "jornalista": "Hugo Kapich", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Semifinal da Superliga- Flamengo x Praia Clube", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "about Rio", "jornalista": "Hugo Kapich", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Flamengo x Vasco", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "about Rio", "jornalista": "Hugo Kapich", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Escócia x Brasil", "campanha": "", "detalhamento": ""}, {"editoria": "Entretenimento", "veiculo": "Rio de Rolé", "jornalista": "Rayane Cavalcanti", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Semifinal da Superliga- Flamengo x Praia Clube", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "Rio de Rolé", "jornalista": "Rayane Cavalcanti", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Marrocos", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Lance", "jornalista": "Anna Carolina Ramos", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "NBB - Flamengo x Pinheiros", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Lance", "jornalista": "Anna Carolina Ramos", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Superliga - Fla x Mackenzie", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Thiago de Lima", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Superliga - Fla x Mackenzie", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Agenda", "veiculo": "Eventinhos Cariocas", "jornalista": "Fabi Marins", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Superliga - Fla x Mackenzie", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Agenda", "veiculo": "Eventinhos Cariocas", "jornalista": "Fabi Marins", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brazil x Noruega", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Globonews", "jornalista": "Bruno de Farias Pontes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Brasileirão 10ª Rodada - Vasco x Botafogo", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Propaganda e Marketing", "veiculo": "Meio e Mensagem", "jornalista": "Larissa Santiago", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Brasileirão 10ª Rodada - São Paulo x Cruzeiro", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Propaganda e Marketing", "veiculo": "Meio e Mensagem", "jornalista": "Larissa Santiago", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - São Paulo e Botafogo", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Propaganda e Marketing", "veiculo": "Meio e Mensagem", "jornalista": "Larissa Santiago", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Japão", "campanha": "", "detalhamento": ""}, {"editoria": "Cidades", "veiculo": "Rio I Love", "jornalista": "Danielle Barros", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "NBB - Flamengo x Minas", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "TV Record", "jornalista": "Thuany Dossares", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Brasileirão - 11ª rodada - Fluminense x Flamengo", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "TV Record", "jornalista": "Thuany Dossares", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "Geral", "veiculo": "TV Record", "jornalista": "Thuany Dossares", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brasil x Noruega", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Placar", "jornalista": "Bruno Neves", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Libertadores - 2ª Rodada - Flamengo x Independiente de Medellín", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Rapgol", "jornalista": "Bruno Inácio", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "Ida ao evento e publicação no site e redes sociais", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Rapgol", "jornalista": "Bruno Inácio", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Libertadores - 2ª Rodada - Flamengo x Independiente de Medellín", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Rapgol", "jornalista": "Bruno Inácio", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Marrocos", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Lance", "jornalista": "Lucas Bayer", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Semifinal da Superliga - Fla x Praia Clube", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Tv Brasil", "jornalista": "Carlos Colla", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Semifinal da Superliga - Fla x Praia Clube", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Política", "veiculo": "Valor", "jornalista": "Helena Benfica", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Brasileirão 12ª Rodada - Cruzeiro x Grêmio", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Política", "veiculo": "Valor", "jornalista": "Helena Benfica", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Brasileirão 10ª Rodada - São Paulo x Cruzeiro", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Política", "veiculo": "Valor", "jornalista": "Helena Benfica", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Cruzeiro x Grêmio", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Bruno Giufrida", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Brasileirão 12ª Rodada - Santos x Fluminense", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Bruno Giufrida", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Santos x Fluminense", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "GE TV", "jornalista": "Thiago Dias", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Flamengo x Vasco", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Cidades", "veiculo": "@Tijuca", "jornalista": "Diogo", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Flamengo x Vasco", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Economia", "veiculo": "Forbes", "jornalista": "Décio Galina", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Corinthians x São Paulo", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "RBS TV", "jornalista": "Tomás Hammes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Internacional x Vasco", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "Sai de Kasa Salvador", "jornalista": "Daniela Santos", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Vitória x Internacional", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "SBT", "jornalista": "Aucilene Brito", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Flamengo x Palmeiras", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "SBT", "jornalista": "Aucilene Brito", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brasil x Noruega", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Lance", "jornalista": "Marcelo Bertoldo", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Flamengo x Palmeiras", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Record", "jornalista": "Anna Maria Pires", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Flamengo x Palmeiras", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "TNT Sports", "jornalista": "Monique Danello", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Brasileirão 14ª Rodada - Flamengo x Palmeiras", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "@defrentecommontoya", "jornalista": "Carlos Augusto", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "NBB - Flamengo x Brasília", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Esportes DF", "jornalista": "Haland Guilarde", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Ida evento quadras; - Recebeu e postou press kit; - Publicação sobre quadras em site e redes sociais", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Propaganda e Marketing", "veiculo": "Poder 360", "jornalista": "Vitor Struck", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "- Matérias positivas sobre o setor e Betano; - Rápido na resposta; - Costuma emplacar nossas pautas; - Aberto ao setor", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Cidades", "veiculo": "Globo", "jornalista": "Rosângela Caino", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Recebeu press kit e não postou; - Emplacou matéria sobre quadras na Globo; - Não compareceu ao evento mas mandou equipe", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "SBT", "jornalista": "Lucas Magalhães", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Record DF", "jornalista": "Manoel de Oliveira", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Recebeu press kit e não postou; - Emplacou matéria sobre quadras na Record; - Não compareceu ao evento mas mandou equipe", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Propaganda e Marketing", "veiculo": "Propark", "jornalista": "Bruna Nunes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Propaganda e Marketing", "veiculo": "UOL", "jornalista": "Renato Pezzotti", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "UOL", "jornalista": "Ricardo Magatti", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "- Almoço de relacionamento; - Emplacou matérias positivas para o setor com entrevista do Gui", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "Folha de S.Paulo", "jornalista": "Alex Sabino", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Participou de almoço de relacionamento; - Confiável", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "Folha de S.Paulo", "jornalista": "Alex Sabino", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "respeita offs; - Nos busca proativamente para pautas; - Notas favoráveis ao setor", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "Folha de S.Paulo", "jornalista": "Alex Sabino", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Japão", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Canal do Loredo", "jornalista": "Sergio Loredo", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Geral", "veiculo": "CNN", "jornalista": "Cleber Rodrigues", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Dezembro", "ano": 2025, "evento": "Réveillon - OK", "campanha": "Verão Betano", "detalhamento": "Jogos no espaço/ Réveillon"}, {"editoria": "Geral", "veiculo": "CNN", "jornalista": "Cleber Rodrigues", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "Entretenimento", "veiculo": "Rap Mais", "jornalista": "Ruan", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brazil x Marrocos", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Sporting News", "jornalista": "Vinicius Perazini", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Regis Almeida", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Marrocos", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Bola Vip Brasil", "jornalista": "Vinicius Consulin", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Entretenimento", "veiculo": "G1 DF", "jornalista": "Luiza Garonce", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Recebeu press kit e não postou ou agradeceu; - Não foi a evento das quadras; - Não emplacou matéria no G1", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Cidades", "veiculo": "G1 DF", "jornalista": "Brenda Ortiz", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Recebeu press kit e não postou ou agradeceu; - Não foi a evento das quadras; - Não emplacou matéria no G1", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "Jornal de Brasilia", "jornalista": "Anna Laurindo", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Recebeu press kit e não postou ou agradeceu; - Não foi a evento das quadras", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Política", "veiculo": "Estadão", "jornalista": "Paula Ferreira", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Recebeu press kit e não postou ou agradeceu; - Não foi a evento das quadras; - Não emplacou matéria no Estadão", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Economia", "veiculo": "Valor Econômico", "jornalista": "ir", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "O Tempo/ Rádio Fã", "jornalista": "Maria Gabriela", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Geral", "veiculo": "Band", "jornalista": "Adison Ramos", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brasil x Noruega", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Botafogo Nela", "jornalista": "Aline Bordalo", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "O Globo", "jornalista": "Thales Machado", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Luiza Sá", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "O Globo", "jornalista": "Diogo Dantas", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Amazon Prime Video", "jornalista": "Rômulo Mendonça", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "⭐", "observacoes": "", "mes": "Dezembro", "ano": 2025, "evento": "Histórico de 2025: Se negou a fazer entrevista exclusiva com o Giannis por ser bet", "campanha": "Verão Betano", "detalhamento": "Jogos no espaço/ Réveillon"}, {"editoria": "Esportes", "veiculo": "ESPN/ NBA Brasil", "jornalista": "Alana Ambrósio", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Recebeu press kit", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "ESPN/ NBA Brasil", "jornalista": "Alana Ambrósio", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "não postou e não público matéria", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "ESPN", "jornalista": "Fernando Nardini", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Band Esporte Clube", "jornalista": "Matheus Scontre", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Dezembro", "ano": 2025, "evento": "Repórter que fez entrevista com Giannis em 2025", "campanha": "Verão Betano", "detalhamento": "Jogos no espaço/ Réveillon"}, {"editoria": "Esportes", "veiculo": "Band Esporte Clube", "jornalista": "Matheus Scontre", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Recebeu press kit", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Band Esporte Clube", "jornalista": "Matheus Scontre", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "não postou e não publicou matéria", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Band Esporte Clube", "jornalista": "Matheus Scontre", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "O Globo", "jornalista": "André Miranda", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Tv Globo", "jornalista": "Clara Casé", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Recebeu press kit", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Tv Globo", "jornalista": "Clara Casé", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "não postou e não publicou matéria", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Tv Globo", "jornalista": "Fábio Grijó", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Recebeu press kit", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Esportes", "veiculo": "Tv Globo", "jornalista": "Fábio Grijó", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "não postou e não publicou matéria", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "CBN", "jornalista": "Edelusa Macedo", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Recebeu press kit", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "CBN", "jornalista": "Edelusa Macedo", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "não postou e não publicou matéria. Foi convidada a evento das quadras mas não compareceu", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Política", "veiculo": "Amado (ex Platô BR )", "jornalista": "Guilherme Amado", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Fevereiro", "ano": 2026, "evento": "Almoço de relacionamento", "campanha": "Camisa Fla Libertadores", "detalhamento": "Encontro de relacionamento - Não realizado"}, {"editoria": "Política", "veiculo": "Amado (ex Platô BR )", "jornalista": "Guilherme Amado", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Recebeu press kit", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Política", "veiculo": "Amado (ex Platô BR )", "jornalista": "Guilherme Amado", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "não postou e não publicou matéria. Foi convidada a evento das quadras mas não compareceu", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "Poder 360", "jornalista": "João Rodrigues", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "Recebeu press kit", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "Poder 360", "jornalista": "João Rodrigues", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "mas não postou. Emplacou matéria no Poder 360", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "Minha Brasilia", "jornalista": "Daniel Zukko", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Recebeu press kit e postou; - Foi ao evento; - Publicou no site e redes sociais", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "Visite Brasília", "jornalista": "Luiz Eduardo Passeado", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Recebeu press kit e não postou; - Publicou no site e redes sociais", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "De Boa Brasília", "jornalista": "Luiz Miranda", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Recebeu press kit e não postou; - Publicou no site e redes sociais", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "Desfrute Cultural", "jornalista": "Paula Pratini", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Foi convidada ao evento mas não foi; - Não publicou", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Economia", "veiculo": "Valor Econômico", "jornalista": "Marcello Corrêa", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "⭐", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Ativado em diversas oportunidade", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Economia", "veiculo": "Valor Econômico", "jornalista": "Marcello Corrêa", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "⭐", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "nunca deu resposta", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "R7 Brasilia", "jornalista": "Edis Henrique", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "- Ativado em diversas oportunidades", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "R7 Brasilia", "jornalista": "Edis Henrique", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "nunca deu resposta sobre pautas", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "R7 Brasilia", "jornalista": "Edis Henrique", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Abril", "ano": 2026, "evento": "apenas ingresso Na Praia", "campanha": "Quadras Brasília", "detalhamento": "Press Kit Brasília / Encontro de relacionamento"}, {"editoria": "Geral", "veiculo": "R7 Brasilia", "jornalista": "Edis Henrique", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Bom", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Aceitou receber Na Praia", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Economia", "veiculo": "Bloomberg Brasília", "jornalista": "Daniel Carvalho", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "⭐", "observacoes": "", "mes": "Maio", "ano": 2026, "evento": "Não aceitou ingressos do Na Praia", "campanha": "Jogos Brasileiro/ Copa do Brasil/ Libertadores", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Entretenimento", "veiculo": "MKT Esportivo", "jornalista": "Eduardo Esteves", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Lance", "jornalista": "Cláudio Rabha", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Propaganda e Marketing", "veiculo": "Máquina do Esporte", "jornalista": "Erich Beting", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Propaganda e Marketing", "veiculo": "Adnews", "jornalista": "Marina Paes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Março", "ano": 2026, "evento": "Deu matéria sobre Betano Day", "campanha": "Manto Mais Pesado/ Betano Day", "detalhamento": "Encontro de relacionamento"}, {"editoria": "Propaganda e Marketing", "veiculo": "Adnews", "jornalista": "Marina Paes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Marrocos", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "UOL/ TV Cultura", "jornalista": "Mauro Cezar", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Coluna do Fla", "jornalista": "Rodrigo Lima", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "Muito bom", "observacoes": "", "mes": "", "ano": "", "evento": "", "campanha": "", "detalhamento": ""}, {"editoria": "Bets", "veiculo": "IGaming Business Brasil", "jornalista": "Gilzo Mazza", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Marrocos", "campanha": "", "detalhamento": ""}, {"editoria": "Geral", "veiculo": "O Dia", "jornalista": "Luiz André Ferreira", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "", "veiculo": "AzMina", "jornalista": "Maria Rosetti Maia", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "", "veiculo": "Jovem Pan", "jornalista": "Beatriz Rodrigues Araújo", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Gazeta Esportiva", "jornalista": "Luca Castilho", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Gazeta Esportiva", "jornalista": "Luca Castilho", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brasil x Noruega", "campanha": "", "detalhamento": ""}, {"editoria": "Tech", "veiculo": "Valor Econômico", "jornalista": "Felipe Laurence", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "Tech", "veiculo": "CanalTech", "jornalista": "Elisa Fontes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Haiti", "campanha": "", "detalhamento": ""}, {"editoria": "Lifestyle", "veiculo": "Africanize", "jornalista": "Wanessa Fernandes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Marrocos", "campanha": "", "detalhamento": ""}, {"editoria": "Lifestyle", "veiculo": "Africanize", "jornalista": "Cristian Akawi", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Marrocos", "campanha": "", "detalhamento": ""}, {"editoria": "Cidades", "veiculo": "Agenda Cultura RJ", "jornalista": "Vitor Monteiro", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Escócia x Brasil", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Record", "jornalista": "Rodrigo Rodrigues", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Escócia x Brasil", "campanha": "", "detalhamento": ""}, {"editoria": "Cidades", "veiculo": "Pri pelas Ruas", "jornalista": "Priscila Ruas", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Escócia x Brasil", "campanha": "", "detalhamento": ""}, {"editoria": "Terceiro setor", "veiculo": "Observatório do Terceiro Setor", "jornalista": "Lucas Neves", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Escócia x Brasil", "campanha": "", "detalhamento": ""}, {"editoria": "Tech", "veiculo": "Uol", "jornalista": "Helton Simões", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Escócia x Brasil", "campanha": "", "detalhamento": ""}, {"editoria": "Cidades", "veiculo": "SP 24H", "jornalista": "Fábio Alves", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Escócia x Brasil", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "ESPN", "jornalista": "Mari Pereira", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Escócia x Brasil", "campanha": "", "detalhamento": ""}, {"editoria": "Tech", "veiculo": "CanalTech", "jornalista": "Anaísa Catucci da Silva", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Escócia x Brasil", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "TV Brasil", "jornalista": "Marilia Arrigoni", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Japão", "campanha": "", "detalhamento": ""}, {"editoria": "Cidades", "veiculo": "Rio I Love", "jornalista": "Dani", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Japão", "campanha": "", "detalhamento": ""}, {"editoria": "Cidades", "veiculo": "Experiemente Rio", "jornalista": "Ed", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Japão", "campanha": "", "detalhamento": ""}, {"editoria": "Geral", "veiculo": "TV Globo", "jornalista": "Cleber Cândido", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Japão", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "TV Globo", "jornalista": "Felipe Zito", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Japão", "campanha": "", "detalhamento": ""}, {"editoria": "Lifestyle", "veiculo": "Rap Mais", "jornalista": "Mateus", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Junho", "ano": 2026, "evento": "Fanzone - Brasil x Japão", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Respiramos Futebol", "jornalista": "Marcelo Pecly", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brasil x Noruega", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "Sporting News", "jornalista": "Vinícius Perazzini", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brasil x Noruega", "campanha": "", "detalhamento": ""}, {"editoria": "Geral", "veiculo": "SBT News", "jornalista": "Adriana Moraes", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brasil x Noruega", "campanha": "", "detalhamento": ""}, {"editoria": "Esportes", "veiculo": "ESPN", "jornalista": "Diego Ferron", "aniversario": "", "time_coracao": "", "instagram": "", "local": "", "experiencia": "", "observacoes": "", "mes": "Julho", "ano": 2026, "evento": "Fanzone - Brasil x Noruega", "campanha": "", "detalhamento": ""}];
+const SEED_EXPORTED_AT = "2026-07-21";
+
+const COLOR = {
+  teal:'#146B57', tealSoft:'#1FA37F', amber:'#B9791A', red:'#A23A26',
+  blue:'#2C5A8C', gold:'#C79A2B', slate:'#8A97A8'
+};
+
+/* ============================================================
+   HELPERS COMPARTILHADOS
+   ============================================================ */
+function norm(s){ return (s||'').toString().replace(/\s+/g,' ').trim(); }
+function parseDateBR(str){
+  if(!str) return null;
+  str = str.toString().trim();
+  let m = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if(m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = str.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m){
+    let a=+m[1], b=+m[2], y=+m[3];
+    if(a>12) return new Date(y, b-1, a);
+    if(b>12) return new Date(y, a-1, b);
+    return new Date(y, b-1, a);
+  }
+  let d = new Date(str);
+  return isNaN(d) ? null : d;
+}
+function fmtDate(d){ if(!d) return '—'; return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric' }); }
+function fmtMonth(d){ return d.toLocaleDateString('pt-BR', { month:'short', year:'2-digit' }).replace('.',''); }
+function isUrl(s){ return /^https?:\/\//i.test((s||'').trim()); }
+function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toneClass(map, value, fallback){ return map[norm(value)] || fallback || 'grey'; }
+function stampHtml(label, tone){ return '<span class="stamp '+tone+'">'+escapeHtml(label)+'</span>'; }
+function baseFont(){ return { family:"Inter", size:11 }; }
+
+const MONTH_ORDER = { 'Janeiro':1,'Fevereiro':2,'Março':3,'Abril':4,'Maio':5,'Junho':6,'Julho':7,'Agosto':8,'Setembro':9,'Outubro':10,'Novembro':11,'Dezembro':12 };
+
+/* ================================================================================
+   =============================  ABA 1 — AÇÕES  ==================================
+   ================================================================================ */
+let A_RAW = [], A_FILTERED = [], A_VIEW = 'cards';
+const aCharts = {};
+function aDestroyChart(key){ if(aCharts[key]){ aCharts[key].destroy(); delete aCharts[key]; } }
+
+const ACAO_TONE = { 'Contato feito':'teal', 'Entrar em contato':'blue', 'Tentando contato':'amber', 'Não entrar em contato':'red', 'Encontro In Press':'gold' };
+const RETORNO_TONE = { 'Contato feito':'teal', 'Aguardando resposta':'amber', 'Não deu resposta':'red', 'Retorno':'teal' };
+
+function aNormalizeRecord(o){
+  return {
+    data: o.data ? new Date(o.data + 'T00:00:00') : null,
+    materia: o.materia||'', veiculo:norm(o.veiculo), jornalista:o.jornalista||'',
+    acao:norm(o.acao), acao_detalhe:o.acao_detalhe||'', analise:o.analise||'',
+    retorno:norm(o.retorno), retorno_detalhe:o.retorno_detalhe||'', contato:o.contato||''
+  };
+}
+// Correspondência exata de cabeçalho: "Ação"/"Ação (Detalhamento)" e
+// "Retorno"/"Retorno (Detalhamento)" começam com o mesmo texto.
+function aNormalizeLiveRow(row){
+  const keys = Object.keys(row);
+  const find = (target) => {
+    const exact = keys.find(k => norm(k).toLowerCase() === target.toLowerCase());
+    if(exact) return row[exact];
+    const starts = keys.find(k => norm(k).toLowerCase().startsWith(target.toLowerCase()) && !norm(k).toLowerCase().includes('detalhamento'));
+    return starts ? row[starts] : '';
+  };
+  return {
+    data: parseDateBR(find('Data')),
+    materia: find('Matéria/Oportunidade') || find('Materia/Oportunidade'),
+    veiculo: norm(find('Veículo') || find('Veiculo')),
+    jornalista: find('Jornalista'),
+    acao: norm(find('Ação') || find('Acao')),
+    acao_detalhe: row[keys.find(k => norm(k).toLowerCase()==='ação (detalhamento)'||norm(k).toLowerCase()==='acao (detalhamento)')] || '',
+    analise: find('Análise da Matéria') || find('Analise da Materia'),
+    retorno: norm(row[keys.find(k => norm(k).toLowerCase()==='retorno')] ?? ''),
+    retorno_detalhe: row[keys.find(k => norm(k).toLowerCase()==='retorno (detalhamento)')] || '',
+    contato: find('Contato')
+  };
+}
+async function aLoadLiveData(){
+  const res = await fetch(CONFIG.ACOES_CSV_URL, { cache:'no-store' });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  const parsed = Papa.parse(text.trim(), { header:true, skipEmptyLines:true });
+  if(!parsed.data || !parsed.data.length) throw new Error('Planilha vazia');
+  const rows = parsed.data.map(aNormalizeLiveRow).filter(r => r.data || r.veiculo || r.jornalista);
+  if(!rows.length) throw new Error('Nenhuma linha reconhecida');
+  return rows;
+}
+function aSetStatus(kind, text){
+  // status visual foi simplificado para o rodapé/banner; mantemos função para compatibilidade
+}
+function aShowOfflineBanner(msg){
+  document.getElementById('offlineBanner').innerHTML =
+    '<div class="banner offline"><span>⚠ '+escapeHtml(msg)+'</span><button type="button" onclick="initAcoes()">Tentar novamente</button></div>';
+}
+function aClearBanner(){ document.getElementById('offlineBanner').innerHTML = ''; }
+
+async function initAcoes(){
+  aClearBanner();
+  try{
+    A_RAW = await aLoadLiveData();
+  }catch(err){
+    A_RAW = SEED_DATA_ACOES.map(aNormalizeRecord);
+    aShowOfflineBanner('Não foi possível buscar a planilha ao vivo agora (' + err.message + '). Mostrando a última cópia salva (' + fmtDate(new Date(SEED_EXPORTED_AT+'T00:00:00')) + ').');
+  }
+  document.getElementById('tabCountAcoes').textContent = A_RAW.length;
+  aBuildFilterOptions();
+  aApplyFilters();
+}
+
+function aBuildFilterOptions(){
+  const fill = (id, values) => {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    sel.innerHTML = sel.options[0].outerHTML;
+    values.forEach(v => { const opt = document.createElement('option'); opt.value=v; opt.textContent=v; sel.appendChild(opt); });
+    if(values.includes(current)) sel.value = current;
+  };
+  fill('fVeiculo', [...new Set(A_RAW.map(r=>r.veiculo).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')));
+  fill('fAcao', [...new Set(A_RAW.map(r=>r.acao).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')));
+  fill('fRetorno', [...new Set(A_RAW.map(r=>r.retorno).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')));
+}
+
+function aApplyFilters(){
+  const q = norm(document.getElementById('fSearch').value).toLowerCase();
+  const veic = document.getElementById('fVeiculo').value;
+  const acao = document.getElementById('fAcao').value;
+  const ret = document.getElementById('fRetorno').value;
+  const de = document.getElementById('fDe').value ? new Date(document.getElementById('fDe').value + 'T00:00:00') : null;
+  const ate = document.getElementById('fAte').value ? new Date(document.getElementById('fAte').value + 'T23:59:59') : null;
+
+  A_FILTERED = A_RAW.filter(r=>{
+    if(veic && r.veiculo !== veic) return false;
+    if(acao && r.acao !== acao) return false;
+    if(ret && r.retorno !== ret) return false;
+    if(de && (!r.data || r.data < de)) return false;
+    if(ate && (!r.data || r.data > ate)) return false;
+    if(q){
+      const hay = [r.materia,r.veiculo,r.jornalista,r.analise,r.acao_detalhe,r.retorno_detalhe].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('resultCount').textContent = A_FILTERED.length + ' de ' + A_RAW.length + ' registros';
+  aRenderKPIs(A_FILTERED);
+  aRenderCharts(A_FILTERED);
+  aRenderFeed(A_FILTERED);
+  aRenderTicker(A_RAW);
+}
+
+function aRenderKPIs(rows){
+  const total = rows.length;
+  const contatoFeito = rows.filter(r=>r.acao==='Contato feito').length;
+  const aguardando = rows.filter(r=>r.retorno==='Aguardando resposta').length;
+  const semContato = rows.filter(r=>r.acao==='Não entrar em contato').length;
+  const retornoPositivo = rows.filter(r=>r.retorno==='Contato feito'||r.retorno==='Retorno').length;
+  const veiculos = new Set(rows.map(r=>r.veiculo).filter(Boolean)).size;
+  const jornalistas = new Set(rows.map(r=>r.jornalista).filter(Boolean)).size;
+  const taxa = total ? Math.round((retornoPositivo/total)*100) : 0;
+  const items = [
+    {num:total, label:'Ações registradas', sub:'no período filtrado', accent:''},
+    {num:contatoFeito, label:'Contatos feitos', sub: total? Math.round(contatoFeito/total*100)+'% do total':'—', accent:'accent-teal'},
+    {num:aguardando, label:'Aguardando resposta', sub:'em aberto com o jornalista', accent:'accent-amber'},
+    {num:retornoPositivo, label:'Retornos positivos', sub:taxa+'% de taxa de retorno', accent:'accent-teal'},
+    {num:semContato, label:'Sem abordagem prevista', sub:'pautas sensíveis / fora de escopo', accent:'accent-red'},
+    {num:veiculos+' / '+jornalistas, label:'Veículos / jornalistas', sub:'únicos no recorte', accent:'accent-gold'},
+  ];
+  document.getElementById('kpiGrid').innerHTML = items.map(i=>'<div class="kpi '+i.accent+'"><div class="num">'+i.num+'</div><div class="label">'+i.label+'</div><div class="sub">'+i.sub+'</div></div>').join('');
+}
+
+function aRenderCharts(rows){
+  if(typeof Chart === 'undefined'){
+    document.querySelectorAll('#viewAcoes .chart-canvas-wrap').forEach(w=>{
+      w.innerHTML = '<div class="chart-fallback">Não foi possível carregar a biblioteca de gráficos (Chart.js), provavelmente bloqueada pela rede. Os números continuam corretos nos indicadores e nos cartões abaixo.</div>';
+    });
+    return;
+  }
+  try{
+    aRenderFunil(rows);
+    aRenderDonut('chartAcao', rows, 'acao', ACAO_TONE);
+    aRenderDonut('chartRetorno', rows.filter(r=>r.retorno), 'retorno', RETORNO_TONE);
+    aRenderTimeline(rows);
+    aRenderTopBar('chartVeiculos', rows, 'veiculo');
+    aRenderTopBar('chartJornalistas', rows, 'jornalista');
+  }catch(err){ console.error('Falha ao desenhar gráficos (Ações):', err); }
+}
+
+function aRenderFunil(rows){
+  aDestroyChart('funil');
+  const total = rows.length;
+  const abordados = rows.filter(r=>['Contato feito','Tentando contato','Entrar em contato','Encontro In Press'].includes(r.acao)).length;
+  const respondidos = rows.filter(r=>r.retorno && r.retorno!=='Não deu resposta').length;
+  const positivos = rows.filter(r=>r.retorno==='Contato feito'||r.retorno==='Retorno').length;
+  aCharts.funil = new Chart(document.getElementById('chartFunil'), {
+    type:'bar',
+    data:{ labels:['Pautas mapeadas','Abordagem realizada/em curso','Jornalista respondeu','Retorno positivo / encontro'],
+      datasets:[{ data:[total, abordados, respondidos, positivos], backgroundColor:[COLOR.slate, COLOR.blue, COLOR.amber, COLOR.tealSoft], borderRadius:4, barThickness:34 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>c.parsed.x+' registros'}} },
+      scales:{ x:{ beginAtZero:true, ticks:{font:baseFont()}, grid:{color:'#EFEAE0'} }, y:{ ticks:{font:baseFont()}, grid:{display:false} } } }
+  });
+}
+function aRenderDonut(canvasId, rows, field, toneMap){
+  aDestroyChart(canvasId);
+  const counts = {};
+  rows.forEach(r=>{ const v = r[field] || 'Sem registro'; counts[v] = (counts[v]||0)+1; });
+  const labels = Object.keys(counts);
+  const toneToHex = {teal:COLOR.teal, amber:COLOR.amber, red:COLOR.red, blue:COLOR.blue, gold:COLOR.gold, grey:COLOR.slate};
+  const colors = labels.map(l => toneToHex[toneClass(toneMap,l)] || COLOR.slate);
+  aCharts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data:labels.map(l=>counts[l]), backgroundColor:colors, borderColor:'#fff', borderWidth:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{ position:'bottom', labels:{ font:baseFont(), boxWidth:10, padding:10 } } } }
+  });
+}
+function aRenderTimeline(rows){
+  aDestroyChart('tempo');
+  const withDate = rows.filter(r=>r.data).sort((a,b)=>a.data-b.data);
+  const buckets = {};
+  withDate.forEach(r=>{ const key = r.data.getFullYear()+'-'+String(r.data.getMonth()+1).padStart(2,'0'); buckets[key] = (buckets[key]||0)+1; });
+  const keys = Object.keys(buckets).sort();
+  const labels = keys.map(k=>{ const [y,m]=k.split('-'); return fmtMonth(new Date(+y,+m-1,1)); });
+  aCharts.tempo = new Chart(document.getElementById('chartTempo'), {
+    type:'line',
+    data:{ labels, datasets:[{ data:keys.map(k=>buckets[k]), borderColor:COLOR.gold, backgroundColor:'rgba(199,154,43,0.15)', fill:true, tension:0.35, pointRadius:3, pointBackgroundColor:COLOR.gold }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} },
+      scales:{ y:{ beginAtZero:true, ticks:{stepSize:1, font:baseFont()}, grid:{color:'#EFEAE0'} }, x:{ ticks:{font:baseFont()}, grid:{display:false} } } }
+  });
+}
+function aRenderTopBar(canvasId, rows, field){
+  aDestroyChart(canvasId);
+  const counts = {};
+  rows.forEach(r=>{ const v = r[field]; if(v) counts[v] = (counts[v]||0)+1; });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10).reverse();
+  aCharts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{ labels:top.map(t=>t[0]), datasets:[{ data:top.map(t=>t[1]), backgroundColor:COLOR.blue, borderRadius:3, barThickness:14 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} },
+      scales:{ x:{ beginAtZero:true, ticks:{stepSize:1, font:baseFont()}, grid:{color:'#EFEAE0'} }, y:{ ticks:{font:{family:'Inter',size:10.5}}, grid:{display:false} } } }
+  });
+}
+function aRenderTicker(rows){
+  const recent = [...rows].filter(r=>r.data).sort((a,b)=>b.data-a.data).slice(0,14);
+  if(!recent.length){ document.getElementById('ticker').textContent = 'Sem ações registradas ainda.'; return; }
+  const items = recent.map(r=>'<span><b>'+fmtDate(r.data)+'</b> — '+escapeHtml(r.veiculo||'—')+' · '+escapeHtml(r.jornalista||'—')+' · '+escapeHtml(r.acao||'—')+'</span>');
+  document.getElementById('ticker').innerHTML = items.join('') + items.join('');
+}
+function aRenderFeed(rows){
+  const sorted = [...rows].sort((a,b)=> (b.data||0) - (a.data||0));
+  document.getElementById('emptyState').classList.toggle('hidden', sorted.length>0);
+  document.getElementById('cardsView').classList.toggle('hidden', A_VIEW!=='cards' || !sorted.length);
+  document.getElementById('tableView').classList.toggle('hidden', A_VIEW!=='table' || !sorted.length);
+  if(A_VIEW==='cards'){
+    document.getElementById('cardsView').innerHTML = sorted.map(r=>{
+      const acaoTone = toneClass(ACAO_TONE, r.acao, 'grey');
+      const retTone = r.retorno ? toneClass(RETORNO_TONE, r.retorno, 'grey') : null;
+      const materiaHtml = r.materia ? (isUrl(r.materia) ? '<a class="clip-materia" href="'+escapeHtml(r.materia)+'" target="_blank" rel="noopener">Ver matéria ↗</a>' : '<div class="clip-materia notlink">'+escapeHtml(r.materia)+'</div>') : '';
+      const detailBits = [];
+      if(r.acao_detalhe) detailBits.push('<div><b>Detalhe da ação:</b> '+escapeHtml(r.acao_detalhe)+'</div>');
+      if(r.retorno_detalhe) detailBits.push('<div><b>Detalhe do retorno:</b> '+escapeHtml(r.retorno_detalhe)+'</div>');
+      if(r.contato) detailBits.push('<div><b>Contato direto:</b> '+escapeHtml(r.contato)+'</div>');
+      return '<article class="clip"><div class="clip-top"><div><div class="clip-veiculo">'+escapeHtml(r.veiculo||'Veículo não informado')+'</div><div class="clip-jornalista">'+escapeHtml(r.jornalista||'Jornalista não informado')+'</div></div><div class="clip-date">'+fmtDate(r.data)+'</div></div>'
+        + materiaHtml + (r.analise ? '<div class="clip-analise">'+escapeHtml(r.analise)+'</div>' : '')
+        + '<div class="clip-badges">' + stampHtml(r.acao || 'Sem ação registrada', acaoTone) + (r.retorno ? stampHtml(r.retorno, retTone) : stampHtml('Sem retorno ainda','grey')) + '</div>'
+        + (detailBits.length ? '<div class="clip-detail">'+detailBits.join('')+'</div>' : '') + '</article>';
+    }).join('');
+  } else {
+    document.getElementById('tableBody').innerHTML = sorted.map(r=>
+      '<tr><td>'+fmtDate(r.data)+'</td><td>'+escapeHtml(r.veiculo)+'</td><td>'+escapeHtml(r.jornalista)+'</td>'
+      +'<td class="td-materia">'+(r.materia ? (isUrl(r.materia)? '<a href="'+escapeHtml(r.materia)+'" target="_blank" rel="noopener">Ver matéria ↗</a>' : escapeHtml(r.materia)) : '—')+'</td>'
+      +'<td>'+(escapeHtml(r.acao)||'—')+'</td><td>'+(escapeHtml(r.retorno)||'—')+'</td><td>'+(escapeHtml(r.contato)||'—')+'</td><td class="td-analise">'+escapeHtml(r.analise)+'</td></tr>'
+    ).join('');
+  }
+}
+function aExportCsv(){
+  const headers = ['Data','Veículo','Jornalista','Matéria/Oportunidade','Ação','Ação (Detalhamento)','Análise da Matéria','Retorno','Retorno (Detalhamento)','Contato'];
+  const rows = A_FILTERED.map(r=>[ r.data ? r.data.toISOString().slice(0,10) : '', r.veiculo, r.jornalista, r.materia, r.acao, r.acao_detalhe, r.analise, r.retorno, r.retorno_detalhe, r.contato ]);
+  const esc = v => '"'+(v||'').toString().replace(/"/g,'""')+'"';
+  const csv = [headers.map(esc).join(','), ...rows.map(r=>r.map(esc).join(','))].join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'acoes_imprensa_betano_filtrado.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+['fSearch','fVeiculo','fAcao','fRetorno','fDe','fAte'].forEach(id=>{
+  document.getElementById(id).addEventListener(id==='fSearch' ? 'input' : 'change', aApplyFilters);
+});
+document.getElementById('resetBtn').addEventListener('click', ()=>{
+  ['fSearch','fVeiculo','fAcao','fRetorno','fDe','fAte'].forEach(id=>document.getElementById(id).value='');
+  aApplyFilters();
+});
+document.getElementById('exportBtn').addEventListener('click', aExportCsv);
+document.getElementById('viewCardsBtn').addEventListener('click', ()=>{ A_VIEW='cards'; document.getElementById('viewCardsBtn').classList.add('active'); document.getElementById('viewTableBtn').classList.remove('active'); aRenderFeed(A_FILTERED); });
+document.getElementById('viewTableBtn').addEventListener('click', ()=>{ A_VIEW='table'; document.getElementById('viewTableBtn').classList.add('active'); document.getElementById('viewCardsBtn').classList.remove('active'); aRenderFeed(A_FILTERED); });
+
+/* ================================================================================
+   =========================  ABA 2 — JOGOS & EVENTOS  ============================
+   ================================================================================ */
+let J_RAW = [], J_FILTERED = [], J_VIEW = 'cards';
+const jCharts = {};
+function jDestroyChart(key){ if(jCharts[key]){ jCharts[key].destroy(); delete jCharts[key]; } }
+
+const EXPERIENCIA_TONE = { 'Muito bom':'teal', 'Bom':'blue', 'Regular':'amber', 'Ruim':'red', '⭐':'gold' };
+
+function jNormalizeRecord(o){
+  return {
+    editoria:norm(o.editoria), veiculo:norm(o.veiculo), jornalista:o.jornalista||'',
+    aniversario:o.aniversario||'', time_coracao:o.time_coracao||'', instagram:o.instagram||'',
+    local:o.local||'', experiencia:norm(o.experiencia), observacoes:o.observacoes||'',
+    mes:norm(o.mes), ano: o.ano || '', evento:o.evento||'', campanha:o.campanha||'', detalhamento:o.detalhamento||''
+  };
+}
+function jNormalizeLiveRow(row){
+  const keys = Object.keys(row);
+  const find = (target) => { const k = keys.find(k => norm(k).toLowerCase() === target.toLowerCase()); return k ? row[k] : ''; };
+  const ano = find('Ano');
+  return {
+    editoria: norm(find('Editoria')), veiculo: norm(find('Veículo') || find('Veiculo')), jornalista: find('Jornalista'),
+    aniversario: find('Aniversário') || find('Aniversario'),
+    time_coracao: find('Time do coração') || find('Time do coracao'),
+    instagram: find('Instagram/ Linkedin') || find('Instagram/Linkedin') || find('Instagram/ LinkedIn'),
+    local: find('Local'), experiencia: norm(find('Experiência') || find('Experiencia')),
+    observacoes: find('Observações') || find('Observacoes'),
+    mes: norm(find('Mês') || find('Mes')), ano: ano ? parseInt(ano,10) || ano : '',
+    evento: find('Evento'), campanha: find('Campanha do mês') || find('Campanha do mes'),
+    detalhamento: find('Detalhamento')
+  };
+}
+async function jLoadLiveData(){
+  const res = await fetch(CONFIG.JOGOS_CSV_URL, { cache:'no-store' });
+  if(!res.ok) throw new Error('HTTP ' + res.status);
+  const text = await res.text();
+  const parsed = Papa.parse(text.trim(), { header:true, skipEmptyLines:true });
+  if(!parsed.data || !parsed.data.length) throw new Error('Planilha vazia');
+  const rows = parsed.data.map(jNormalizeLiveRow)
+    .filter(r => (r.veiculo || r.jornalista) && !r.editoria.toLowerCase().startsWith('legenda'));
+  if(!rows.length) throw new Error('Nenhuma linha reconhecida');
+  return rows;
+}
+function jShowOfflineBanner(msg){
+  document.getElementById('jOfflineBanner').innerHTML =
+    '<div class="banner offline"><span>⚠ '+escapeHtml(msg)+'</span><button type="button" onclick="initJogos()">Tentar novamente</button></div>';
+}
+function jClearBanner(){ document.getElementById('jOfflineBanner').innerHTML = ''; }
+
+async function initJogos(){
+  jClearBanner();
+  try{
+    J_RAW = await jLoadLiveData();
+  }catch(err){
+    J_RAW = SEED_DATA_JOGOS.map(jNormalizeRecord);
+    jShowOfflineBanner('Não foi possível buscar a planilha ao vivo agora (' + err.message + '). Mostrando a última cópia salva (' + fmtDate(new Date(SEED_EXPORTED_AT+'T00:00:00')) + ').');
+  }
+  document.getElementById('tabCountJogos').textContent = J_RAW.length;
+  jBuildFilterOptions();
+  jApplyFilters();
+}
+
+function jBuildFilterOptions(){
+  const fill = (id, values) => {
+    const sel = document.getElementById(id);
+    const current = sel.value;
+    sel.innerHTML = sel.options[0].outerHTML;
+    values.forEach(v => { const opt = document.createElement('option'); opt.value=v; opt.textContent=v; sel.appendChild(opt); });
+    if(values.includes(current)) sel.value = current;
+  };
+  fill('jEditoria', [...new Set(J_RAW.map(r=>r.editoria).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')));
+  fill('jCampanha', [...new Set(J_RAW.map(r=>r.campanha).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')));
+  fill('jMes', [...new Set(J_RAW.map(r=>r.mes).filter(Boolean))].sort((a,b)=>(MONTH_ORDER[a]||99)-(MONTH_ORDER[b]||99)));
+  fill('jExperiencia', [...new Set(J_RAW.map(r=>r.experiencia).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'pt-BR')));
+}
+
+function jApplyFilters(){
+  const q = norm(document.getElementById('jSearch').value).toLowerCase();
+  const edit = document.getElementById('jEditoria').value;
+  const camp = document.getElementById('jCampanha').value;
+  const mes = document.getElementById('jMes').value;
+  const exp = document.getElementById('jExperiencia').value;
+
+  J_FILTERED = J_RAW.filter(r=>{
+    if(edit && r.editoria !== edit) return false;
+    if(camp && r.campanha !== camp) return false;
+    if(mes && r.mes !== mes) return false;
+    if(exp && r.experiencia !== exp) return false;
+    if(q){
+      const hay = [r.veiculo,r.jornalista,r.evento,r.campanha,r.observacoes,r.detalhamento,r.editoria].join(' ').toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+
+  document.getElementById('jResultCount').textContent = J_FILTERED.length + ' de ' + J_RAW.length + ' registros';
+  jRenderKPIs(J_FILTERED);
+  jRenderCharts(J_FILTERED);
+  jRenderFeed(J_FILTERED);
+  jRenderTicker(J_RAW);
+}
+
+function jRenderKPIs(rows){
+  const total = rows.length;
+  const avaliados = rows.filter(r=>r.experiencia);
+  const positivos = avaliados.filter(r=>r.experiencia==='Muito bom'||r.experiencia==='Bom'||r.experiencia==='⭐').length;
+  const ruins = avaliados.filter(r=>r.experiencia==='Ruim').length;
+  const veiculos = new Set(rows.map(r=>r.veiculo).filter(Boolean)).size;
+  const jornalistas = new Set(rows.map(r=>r.jornalista).filter(Boolean)).size;
+  const editorias = new Set(rows.map(r=>r.editoria).filter(Boolean)).size;
+  const eventos = new Set(rows.map(r=>r.evento).filter(Boolean)).size;
+  const taxa = avaliados.length ? Math.round((positivos/avaliados.length)*100) : 0;
+  const items = [
+    {num:total, label:'Registros', sub:'no período filtrado', accent:''},
+    {num:taxa+'%', label:'Experiência positiva', sub:positivos+' de '+avaliados.length+' avaliados', accent:'accent-teal'},
+    {num:ruins, label:'Experiências ruins', sub:'pedem atenção do time', accent:'accent-red'},
+    {num:eventos, label:'Eventos únicos', sub:'no recorte', accent:'accent-gold'},
+    {num:editorias, label:'Editorias ativas', sub:'cobertura diversificada', accent:''},
+    {num:veiculos+' / '+jornalistas, label:'Veículos / jornalistas', sub:'únicos no recorte', accent:'accent-gold'},
+  ];
+  document.getElementById('jKpiGrid').innerHTML = items.map(i=>'<div class="kpi '+i.accent+'"><div class="num">'+i.num+'</div><div class="label">'+i.label+'</div><div class="sub">'+i.sub+'</div></div>').join('');
+}
+
+function jRenderCharts(rows){
+  if(typeof Chart === 'undefined'){
+    document.querySelectorAll('#viewJogos .chart-canvas-wrap').forEach(w=>{
+      w.innerHTML = '<div class="chart-fallback">Não foi possível carregar a biblioteca de gráficos (Chart.js), provavelmente bloqueada pela rede. Os números continuam corretos nos indicadores e nos cartões abaixo.</div>';
+    });
+    return;
+  }
+  try{
+    jRenderTimeline(rows);
+    jRenderDonut('chartJExperiencia', rows.filter(r=>r.experiencia), 'experiencia', EXPERIENCIA_TONE);
+    jRenderTopBar('chartJEditoria', rows, 'editoria', COLOR.blue);
+    jRenderTopBar('chartJCampanha', rows.filter(r=>r.campanha), 'campanha', COLOR.gold);
+    jRenderTopBar('chartJEventos', rows.filter(r=>r.evento), 'evento', COLOR.teal);
+    jRenderTopBar('chartJVeiculos', rows, 'veiculo', COLOR.blue);
+  }catch(err){ console.error('Falha ao desenhar gráficos (Jogos):', err); }
+}
+
+function jRenderTimeline(rows){
+  jDestroyChart('tempo');
+  const buckets = {};
+  rows.forEach(r=>{
+    if(!r.mes) return;
+    const key = (r.ano||'') + '-' + String(MONTH_ORDER[r.mes]||0).padStart(2,'0');
+    buckets[key] = (buckets[key]||0)+1;
+  });
+  const keys = Object.keys(buckets).sort();
+  const labels = keys.map(k=>{ const [y,m] = k.split('-'); const monthName = Object.keys(MONTH_ORDER).find(name=>MONTH_ORDER[name]===+m) || '?'; return monthName.slice(0,3)+'/'+String(y).slice(-2); });
+  jCharts.tempo = new Chart(document.getElementById('chartJTempo'), {
+    type:'bar',
+    data:{ labels, datasets:[{ data:keys.map(k=>buckets[k]), backgroundColor:COLOR.gold, borderRadius:4, barThickness:28 }]},
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} },
+      scales:{ y:{ beginAtZero:true, ticks:{stepSize:5, font:baseFont()}, grid:{color:'#EFEAE0'} }, x:{ ticks:{font:baseFont()}, grid:{display:false} } } }
+  });
+}
+function jRenderDonut(canvasId, rows, field, toneMap){
+  jDestroyChart(canvasId);
+  const counts = {};
+  rows.forEach(r=>{ const v = r[field] || 'Sem registro'; counts[v] = (counts[v]||0)+1; });
+  const labels = Object.keys(counts);
+  const toneToHex = {teal:COLOR.teal, amber:COLOR.amber, red:COLOR.red, blue:COLOR.blue, gold:COLOR.gold, grey:COLOR.slate};
+  const colors = labels.map(l => toneToHex[toneClass(toneMap,l)] || COLOR.slate);
+  jCharts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type:'doughnut',
+    data:{ labels, datasets:[{ data:labels.map(l=>counts[l]), backgroundColor:colors, borderColor:'#fff', borderWidth:2 }] },
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'62%', plugins:{ legend:{ position:'bottom', labels:{ font:baseFont(), boxWidth:10, padding:10 } } } }
+  });
+}
+function jRenderTopBar(canvasId, rows, field, color){
+  jDestroyChart(canvasId);
+  const counts = {};
+  rows.forEach(r=>{ const v = r[field]; if(v) counts[v] = (counts[v]||0)+1; });
+  const top = Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,10).reverse();
+  jCharts[canvasId] = new Chart(document.getElementById(canvasId), {
+    type:'bar',
+    data:{ labels:top.map(t=>t[0]), datasets:[{ data:top.map(t=>t[1]), backgroundColor:color||COLOR.blue, borderRadius:3, barThickness:14 }] },
+    options:{ indexAxis:'y', responsive:true, maintainAspectRatio:false, plugins:{ legend:{display:false} },
+      scales:{ x:{ beginAtZero:true, ticks:{stepSize:1, font:baseFont()}, grid:{color:'#EFEAE0'} }, y:{ ticks:{font:{family:'Inter',size:10.5}}, grid:{display:false} } } }
+  });
+}
+function jRenderTicker(rows){
+  const recent = [...rows].filter(r=>r.mes).sort((a,b)=>{
+    const ka = (a.ano||0)*100+(MONTH_ORDER[a.mes]||0), kb = (b.ano||0)*100+(MONTH_ORDER[b.mes]||0);
+    return kb-ka;
+  }).slice(0,14);
+  if(!recent.length){ document.getElementById('jTicker').textContent = 'Sem registros ainda.'; return; }
+  const items = recent.map(r=>'<span><b>'+escapeHtml(r.mes||'—')+'/'+escapeHtml(String(r.ano||''))+'</b> — '+escapeHtml(r.veiculo||'—')+' · '+escapeHtml(r.jornalista||'—')+' · '+escapeHtml(r.evento||r.experiencia||'—')+'</span>');
+  document.getElementById('jTicker').innerHTML = items.join('') + items.join('');
+}
+
+function jRenderFeed(rows){
+  const sorted = [...rows].sort((a,b)=>{
+    const ka = (a.ano||0)*100+(MONTH_ORDER[a.mes]||0), kb = (b.ano||0)*100+(MONTH_ORDER[b.mes]||0);
+    return kb-ka;
+  });
+  document.getElementById('jEmptyState').classList.toggle('hidden', sorted.length>0);
+  document.getElementById('jCardsView').classList.toggle('hidden', J_VIEW!=='cards' || !sorted.length);
+  document.getElementById('jTableView').classList.toggle('hidden', J_VIEW!=='table' || !sorted.length);
+  if(J_VIEW==='cards'){
+    document.getElementById('jCardsView').innerHTML = sorted.map(r=>{
+      const expTone = r.experiencia ? toneClass(EXPERIENCIA_TONE, r.experiencia, 'grey') : null;
+      const detailBits = [];
+      if(r.detalhamento) detailBits.push('<div><b>Detalhamento:</b> '+escapeHtml(r.detalhamento)+'</div>');
+      if(r.observacoes) detailBits.push('<div><b>Observações:</b> '+escapeHtml(r.observacoes)+'</div>');
+      if(r.aniversario) detailBits.push('<div><b>Aniversário:</b> '+escapeHtml(r.aniversario)+'</div>');
+      if(r.time_coracao) detailBits.push('<div><b>Time do coração:</b> '+escapeHtml(r.time_coracao)+'</div>');
+      if(r.instagram) detailBits.push('<div><b>Instagram/LinkedIn:</b> '+escapeHtml(r.instagram)+'</div>');
+      if(r.local) detailBits.push('<div><b>Local:</b> '+escapeHtml(r.local)+'</div>');
+      return '<article class="clip"><div class="clip-top"><div><p class="clip-eyebrow">'+escapeHtml(r.editoria||'Editoria não informada')+'</p><div class="clip-veiculo">'+escapeHtml(r.veiculo||'Veículo não informado')+'</div><div class="clip-jornalista">'+escapeHtml(r.jornalista||'Jornalista não informado')+'</div></div><div class="clip-date">'+escapeHtml(r.mes||'—')+(r.ano?' / '+escapeHtml(String(r.ano)):'')+'</div></div>'
+        + (r.evento ? '<div class="clip-analise"><b>Evento:</b> '+escapeHtml(r.evento)+'</div>' : '')
+        + (r.campanha ? '<div class="clip-analise"><b>Campanha:</b> '+escapeHtml(r.campanha)+'</div>' : '')
+        + '<div class="clip-badges">' + (r.experiencia ? stampHtml(r.experiencia, expTone) : stampHtml('Sem avaliação','grey')) + '</div>'
+        + (detailBits.length ? '<div class="clip-detail">'+detailBits.join('')+'</div>' : '') + '</article>';
+    }).join('');
+  } else {
+    document.getElementById('jTableBody').innerHTML = sorted.map(r=>
+      '<tr><td>'+escapeHtml(r.mes||'—')+(r.ano?'/'+escapeHtml(String(r.ano)):'')+'</td><td>'+escapeHtml(r.editoria)+'</td><td>'+escapeHtml(r.veiculo)+'</td><td>'+escapeHtml(r.jornalista)+'</td>'
+      +'<td class="td-materia">'+escapeHtml(r.evento)+'</td><td>'+escapeHtml(r.campanha)+'</td><td>'+(escapeHtml(r.experiencia)||'—')+'</td><td class="td-analise">'+escapeHtml(r.detalhamento)+'</td></tr>'
+    ).join('');
+  }
+}
+function jExportCsv(){
+  const headers = ['Editoria','Veículo','Jornalista','Aniversário','Time do coração','Instagram/Linkedin','Local','Experiência','Observações','Mês','Ano','Evento','Campanha do mês','Detalhamento'];
+  const rows = J_FILTERED.map(r=>[ r.editoria, r.veiculo, r.jornalista, r.aniversario, r.time_coracao, r.instagram, r.local, r.experiencia, r.observacoes, r.mes, r.ano, r.evento, r.campanha, r.detalhamento ]);
+  const esc = v => '"'+(v||'').toString().replace(/"/g,'""')+'"';
+  const csv = [headers.map(esc).join(','), ...rows.map(r=>r.map(esc).join(','))].join('\n');
+  const blob = new Blob(['\ufeff'+csv], {type:'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = 'jogos_eventos_betano_filtrado.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+['jSearch','jEditoria','jCampanha','jMes','jExperiencia'].forEach(id=>{
+  document.getElementById(id).addEventListener(id==='jSearch' ? 'input' : 'change', jApplyFilters);
+});
+document.getElementById('jResetBtn').addEventListener('click', ()=>{
+  ['jSearch','jEditoria','jCampanha','jMes','jExperiencia'].forEach(id=>document.getElementById(id).value='');
+  jApplyFilters();
+});
+document.getElementById('jExportBtn').addEventListener('click', jExportCsv);
+document.getElementById('jViewCardsBtn').addEventListener('click', ()=>{ J_VIEW='cards'; document.getElementById('jViewCardsBtn').classList.add('active'); document.getElementById('jViewTableBtn').classList.remove('active'); jRenderFeed(J_FILTERED); });
+document.getElementById('jViewTableBtn').addEventListener('click', ()=>{ J_VIEW='table'; document.getElementById('jViewTableBtn').classList.add('active'); document.getElementById('jViewCardsBtn').classList.remove('active'); jRenderFeed(J_FILTERED); });
+
+</script>
+</body>
+</html>
